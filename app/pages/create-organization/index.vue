@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useLazyQuery, useMutation } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable'
 import { graphql, useFragment } from '~/graphql'
 
 const toast = useToast()
@@ -46,7 +46,7 @@ const state = reactive({
 })
 
 const { mutate: createOrganization, loading } = useMutation(CreateOrganizationMutation)
-const { load: lookupOrganizationBySlug, result: existingOrganizationData, loading: slugLoading, error: slugError } = useLazyQuery(OrganizationBySlugQuery, undefined)
+const { result: existingOrganizationData, loading: slugLoading, error: slugError, refetch: refetchExistingOrganizationData } = useQuery(OrganizationBySlugQuery, { slug: '' })
 
 const slugCheckIsValid = ref(false)
 const organization = ref<{ id: string, name: string, slug: string } | null>(null)
@@ -56,8 +56,9 @@ watch(() => state.name, async (name) => {
   // @ts-expect-error: slugify is globally available or auto-imported
   state.slug = (typeof slugify === 'function' ? slugify(name || '', { lower: true }) : name || '').replace(/\s+/g, '-').toLowerCase()
   slugCheckIsValid.value = false
+  formError.value = null
   if (state.slug) {
-    await lookupOrganizationBySlug(OrganizationBySlugQuery, { slug: state.slug })
+    await refetchExistingOrganizationData({ slug: state.slug })
     slugCheckIsValid.value = true
   }
   else {
@@ -71,18 +72,20 @@ async function handleSubmit() {
     const result = await createOrganization({ name: state.name, slug: state.slug })
     if (result?.data?.createOrganization?.organization) {
       // Use fragment to access the organization data
+      state.slug = ''
+      state.name = ''
       const createdOrg = useFragment(CreatedOrganizationFragment, result.data.createOrganization.organization)
       organization.value = createdOrg
       toast.add({
         title: 'Organization created',
-        description: `Welcome to ${state.name}!`,
+        description: `Welcome to ${organization.value?.name}!`,
         icon: 'i-heroicons-check-circle',
         color: 'success',
       })
       setTimeout(() => {
         if (organization.value)
           router.push(`/o/${organization.value.slug}`)
-      }, 1000)
+      }, 30)
     }
     else {
       formError.value = result?.errors?.[0]

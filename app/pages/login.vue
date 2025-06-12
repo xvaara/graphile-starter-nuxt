@@ -94,7 +94,7 @@ async function handleSubmit() {
       </template>
 
       <UForm :state="state" class="space-y-4" @submit="handleSubmit">
-        <UFormField label="Email or username" name="email">
+        <UFormField label="Email or username" name="username">
           <UInput
             v-model="state.username"
             type="text"
