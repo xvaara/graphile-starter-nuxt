@@ -1,11 +1,10 @@
-import type { PgClassExpressionStep } from '@dataplan/pg'
-import type { Plans, Resolvers } from 'graphile-utils'
-import { access } from 'grafast'
-import { gql, makeExtendSchemaPlugin } from 'graphile-utils'
+import type { Plans, Resolvers } from 'postgraphile/utils'
+import { access } from 'postgraphile/grafast'
+import { extendSchema, gql } from 'postgraphile/utils'
 
 import { ERROR_MESSAGE_OVERRIDES } from '../utils/handleErrors'
 
-const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
+const PassportLoginPlugin = extendSchema((build) => {
   const typeDefs = gql`
     input RegisterInput {
       username: String!
@@ -103,9 +102,8 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
       },
     },
     LoginPayload: {
-      user() {
-        const $userId
-          = currentUserIdResource.execute() as PgClassExpressionStep<any, any>
+      user($obj) {
+        const $userId = access($obj, 'userId')
         return userResource.get({ id: $userId })
       },
     },
@@ -212,7 +210,7 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
           // Update pgSettings so future queries will use the new session
           pgSettings!['jwt.claims.session_id'] = session.uuid
 
-          return {}
+          return { userId: session.user_id }
         }
         catch (e: any) {
           const code = e.extensions?.code ?? e.code

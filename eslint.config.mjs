@@ -19,6 +19,22 @@ export default withNuxt(
       },
     },
     {
+      files: ['tests/**/*.test.ts'],
+      rules: {
+        'test/no-import-node-test': 'off',
+        'test/consistent-test-it': 'off',
+        'test/prefer-lowercase-title': 'off',
+      },
+    },
+    {
+      files: ['tests/**/*.mjs', 'scripts/export-schema.mjs'],
+      rules: {
+        'antfu/no-top-level-await': 'off',
+        'node/prefer-global/process': 'off',
+        'no-console': 'off',
+      },
+    },
+    {
       files: ['scripts/**/*'],
       rules: {
         'no-console': 'off',

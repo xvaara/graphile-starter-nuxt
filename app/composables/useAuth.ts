@@ -1,6 +1,7 @@
 export function useAuth() {
   const nuxtApp = useNuxtApp()
   const client = nuxtApp.$apollo
+  const toast = useToast()
 
   // Ensure we're in a Vue lifecycle context
   if (!getCurrentInstance()) {
@@ -12,29 +13,15 @@ export function useAuth() {
   const user = import.meta.client ? useState<SharedLayout_UserFragment | null>('user', () => result.value?.currentUser as SharedLayout_UserFragment | null) : ref<SharedLayout_UserFragment | null>(result.value?.currentUser as SharedLayout_UserFragment | null)
 
   onResult(({ data }) => {
-    if (data?.currentUser) {
-      user.value = data?.currentUser as SharedLayout_UserFragment
-    }
+    user.value = data?.currentUser ?? null
   })
 
-  function subscribe() {
-    const { onResult: onCurrentUserUpdated } = useCurrentUserUpdatedSubscription(toRef(() => ({ enabled: !!user.value })))
-    onCurrentUserUpdated(({ data }) => {
-      if (data?.currentUserUpdated?.user) {
-        user.value = data?.currentUserUpdated?.user as SharedLayout_UserFragment
-      }
-    })
-  }
-  if (import.meta.client) {
-    callOnce('auth:subscribe', subscribe)
-  }
   function logout() {
     return client
       .mutate({ mutation: LogoutDocument })
       .then(async () => {
-        client.resetStore()
-        nuxtApp.$apolloWSClient.terminate()
-        const toast = useToast()
+        await client.resetStore()
+        nuxtApp.$apolloWSClient?.terminate()
         user.value = null
 
         toast.add({
@@ -56,8 +43,19 @@ export function useAuth() {
   return {
     isAuthenticated: computed(() => !!user.value),
     user: readonly(user),
-    subscribe,
     logout,
     refetchUser,
   }
+}
+
+// The app owns this subscription so route/layout changes cannot dispose it.
+export function useAuthSubscription() {
+  if (import.meta.server)
+    return
+  const user = useState<SharedLayout_UserFragment | null>('user', () => null)
+  const { onResult } = useCurrentUserUpdatedSubscription(() => ({ enabled: !!user.value }))
+  onResult(({ data }) => {
+    if (user.value && data?.currentUserUpdated?.user)
+      user.value = { ...user.value, ...data.currentUserUpdated.user }
+  })
 }

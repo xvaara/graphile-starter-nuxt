@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { resolve } from 'node:path'
 import dotenv from 'dotenv'
 import pg from 'pg'
 import {
@@ -19,8 +20,8 @@ runMain(async () => {
   // runSync(pkgMgrCmd, ["server", "build"]);
 
   // Source our environment
-  dotenv.config({ path: `${import.meta.dirname}/../.env` })
-  // require(`${import.meta.dirname}/../@app/config/extra`);
+  dotenv.config({ path: resolve(import.meta.dirname, '../.env') })
+  // require(resolve(import.meta.dirname, '../@app/config/extra'));
   const {
     DATABASE_AUTHENTICATOR,
     DATABASE_AUTHENTICATOR_PASSWORD,

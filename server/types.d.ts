@@ -20,3 +20,9 @@ declare module '#auth-utils' {
     session_id: string
   }
 }
+
+declare module 'h3' {
+  interface H3EventContext {
+    graphileApolloLink: import('@apollo/client').ApolloLink
+  }
+}

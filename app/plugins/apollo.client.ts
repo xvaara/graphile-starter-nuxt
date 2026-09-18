@@ -2,18 +2,17 @@ import type { NormalizedCacheObject } from '@apollo/client/core'
 import type { Client as WSClient } from 'graphql-ws'
 import { ApolloClient, createHttpLink, InMemoryCache, split } from '@apollo/client/core'
 
-import { onError } from '@apollo/client/link/error'
+import { ErrorLink } from '@apollo/client/link/error'
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { DefaultApolloClient } from '@vue/apollo-composable'
-import { logErrorMessages } from '@vue/apollo-util'
 import { createClient as createWSClient } from 'graphql-ws'
 
 const ssrKey = '__apollo_ssr__'
 
 export default defineNuxtPlugin((nuxt) => {
   const { vueApp } = nuxt
-  const rootUrl = useRuntimeConfig().public.rootUrl || 'http://localhost:3000'
+  const rootUrl = useRuntimeConfig().public.rootUrl || window.location.origin
 
   // Cache implementation
   const cache = new InMemoryCache()
@@ -48,7 +47,7 @@ export default defineNuxtPlugin((nuxt) => {
   let splitLink: typeof httpLink
   try {
     wsClient = createWSClient({
-      url: `${rootUrl}/api/graphql/ws`,
+      url: `${rootUrl.replace(/^http/, 'ws')}/api/graphql/ws`,
       connectionParams: {
         headers: {
           ...headers,
@@ -82,30 +81,13 @@ export default defineNuxtPlugin((nuxt) => {
     splitLink = httpLink
   }
 
-  // Handle errors
-  const errorLink = onError((error) => {
-    const { graphQLErrors, networkError, operation } = error
-
-    if (graphQLErrors) {
-      graphQLErrors.forEach(({ message, locations, path }) => {
-        console.error(
-          `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}, Operation: ${operation.operationName}`,
-        )
-      })
-    }
-
-    if (networkError) {
-      console.error(`[Network error]: ${networkError}`)
-    }
-
-    // Still use the standard logging
-    logErrorMessages(error)
+  const errorLink = new ErrorLink(({ error }) => {
+    console.error(error)
   })
 
   const apolloClient = new ApolloClient({
     cache,
     link: errorLink.concat(splitLink),
-    connectToDevTools: import.meta.dev,
     devtools: {
       enabled: import.meta.dev,
     },
@@ -118,7 +100,7 @@ export default defineNuxtPlugin((nuxt) => {
 
 declare module '#app' {
   interface NuxtApp {
-    $apollo: ApolloClient<NormalizedCacheObject>
-    $apolloWSClient: WSClient
+    $apollo: ApolloClient
+    $apolloWSClient: WSClient | undefined
   }
 }

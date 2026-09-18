@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { en } from '@nuxt/ui/locale'
+
+useAuthSubscription()
 </script>
 
 <template>

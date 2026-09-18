@@ -9,7 +9,6 @@ const { refetchUser } = useAuth()
 const loading = ref(false)
 const { mutate: register } = useRegisterMutation()
 
-const router = useRouter()
 const toast = useToast()
 
 const state = reactive({
@@ -61,7 +60,7 @@ async function handleSubmit() {
         title: 'Passwords do not match',
         description: 'Please make sure your passwords match',
         icon: 'i-heroicons-exclamation-circle',
-        color: 'red',
+        color: 'error',
       })
       return
     }
@@ -72,7 +71,7 @@ async function handleSubmit() {
         title: 'Invalid username',
         description: 'Please provide a valid username',
         icon: 'i-heroicons-exclamation-circle',
-        color: 'red',
+        color: 'error',
       })
       return
     }
@@ -88,7 +87,7 @@ async function handleSubmit() {
         title: 'Account created successfully',
         description: `Welcome, ${result.data.register.user.name}!`,
         icon: 'i-heroicons-check-circle',
-        color: 'green',
+        color: 'success',
       })
       await refetchUser()
       navigateTo('/')
@@ -116,7 +115,7 @@ async function handleSubmit() {
             title: 'Registration failed',
             description: `An error occurred during registration: ${result.error.message}`,
             icon: 'i-heroicons-exclamation-circle',
-            color: 'red',
+            color: 'error',
           })
         }
       }
@@ -125,7 +124,7 @@ async function handleSubmit() {
           title: 'Registration failed',
           description: 'An unknown error occurred during registration',
           icon: 'i-heroicons-exclamation-circle',
-          color: 'red',
+          color: 'error',
         })
       }
     }
@@ -136,7 +135,7 @@ async function handleSubmit() {
       title: 'An error occurred',
       description: `Please try again later: ${e.message}`,
       icon: 'i-heroicons-exclamation-circle',
-      color: 'red',
+      color: 'error',
     })
   }
 }

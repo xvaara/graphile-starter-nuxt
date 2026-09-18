@@ -10,10 +10,10 @@ const config: CodegenConfig = {
       object: false,
     },
     scalars: {
-      // UUID: "string",
-      // Username: "string",
-      // Url: "string",
-      // Tag: "string",
+      UUID: 'string',
+      Username: 'string',
+      Url: 'string',
+      Tag: 'string',
       Datetime: 'string',
       BigInt: 'string',
       JSON: '{ [key: string]: any }',
@@ -26,7 +26,7 @@ const config: CodegenConfig = {
     // skipTypename: true,
     vueCompositionApiImportFrom: 'vue',
     withCompositionFunctions: true,
-    vueApolloComposableImportFrom: '@vue/apollo-composable',
+    vueApolloComposableImportFrom: '@vue/apollo-composable/compat',
   },
   generates: {
     './app/utils/graphql.ts': {
@@ -36,7 +36,6 @@ const config: CodegenConfig = {
         // { add: { content: ['/* tslint:disable */'] } },
         // { add: { content: ["/* eslint:disable */"] } },
         // { add: { content: ["// @ts-nocheck"] } },
-        'typescript',
         'typescript-operations',
         // "typescript-resolvers",
         'typescript-vue-apollo',
@@ -45,9 +44,6 @@ const config: CodegenConfig = {
     // "./utils/introspection.ts": {
     //   plugins: ["urql-introspection"],
     // },
-  },
-  hooks: {
-    afterAllFileWrite: ['npx eslint --fix '],
   },
 }
 export default config

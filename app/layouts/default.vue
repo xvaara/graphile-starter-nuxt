@@ -26,22 +26,24 @@ function handleLogout() {
         </NuxtLink>
 
         <div class="flex items-center gap-4">
-          <UButton
-            v-if="colorMode.value === 'light'"
-            color="neutral"
-            variant="ghost"
-            icon="i-heroicons-moon"
-            aria-label="Switch to dark mode"
-            @click="toggleDark"
-          />
-          <UButton
-            v-else
-            color="neutral"
-            variant="ghost"
-            icon="i-heroicons-sun"
-            aria-label="Switch to light mode"
-            @click="toggleDark"
-          />
+          <ClientOnly>
+            <UButton
+              v-if="colorMode.value === 'light'"
+              color="neutral"
+              variant="ghost"
+              icon="i-heroicons-moon"
+              aria-label="Switch to dark mode"
+              @click="toggleDark"
+            />
+            <UButton
+              v-else
+              color="neutral"
+              variant="ghost"
+              icon="i-heroicons-sun"
+              aria-label="Switch to light mode"
+              @click="toggleDark"
+            />
+          </ClientOnly>
 
           <template v-if="isAuthenticated">
             <UDropdownMenu

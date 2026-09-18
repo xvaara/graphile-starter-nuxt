@@ -1,18 +1,12 @@
-import type {
-  DocumentNode,
-  FetchResult,
-  NextLink,
-  Operation,
-} from '@apollo/client'
 import type { H3Event } from 'h3'
 import type { PostGraphileInstance } from 'postgraphile'
-import {
-  ApolloLink,
-  Observable,
-} from '@apollo/client'
-import { execute, hookArgs, isAsyncIterable } from 'grafast'
-import { getOperationAST, parse, print } from 'graphql'
+import type { DocumentNode } from 'postgraphile/graphql'
+import { ApolloLink } from '@apollo/client'
 import { LRUCache } from 'lru-cache'
+import { execute, hookArgs, isAsyncIterable } from 'postgraphile/grafast'
+import { getOperationAST, parse, print } from 'postgraphile/graphql'
+import { Observable } from 'rxjs'
+import { validateGraphQLDocument } from '../graphile/graphqlPolicy'
 
 export interface GraphileApolloLinkInterface {
   /** The event object. */
@@ -47,9 +41,9 @@ export class GraphileApolloLink extends ApolloLink {
   }
 
   override request(
-    operation: Operation,
-    _forward?: NextLink,
-  ): Observable<FetchResult> | null {
+    operation: ApolloLink.Operation,
+    _forward?: ApolloLink.ForwardFunction,
+  ): Observable<ApolloLink.Result> {
     const { pgl, event } = this.options
     return new Observable((observer) => {
       (async () => {
@@ -60,6 +54,15 @@ export class GraphileApolloLink extends ApolloLink {
             // query: document,
           } = operation
           const document = cachedParse(print(operation.query))
+          const schema = await pgl.getSchema()
+          const errors = validateGraphQLDocument(schema, document)
+          if (errors.length) {
+            if (!observer.closed) {
+              observer.next({ errors })
+              observer.complete()
+            }
+            return
+          }
           const op = getOperationAST(document, operationName)
           if (!op || op.operation !== 'query') {
             if (!observer.closed) {
@@ -68,7 +71,6 @@ export class GraphileApolloLink extends ApolloLink {
             }
             return
           }
-          const schema = await pgl.getSchema()
           const args = {
             schema,
             resolvedPreset: pgl.getResolvedPreset(),
@@ -77,8 +79,8 @@ export class GraphileApolloLink extends ApolloLink {
             variableValues,
             operationName,
           }
-          await hookArgs(args)
-          const data = await execute(args)
+          const hookedArgs = await hookArgs(args)
+          const data = await execute(hookedArgs)
           if (isAsyncIterable(data)) {
             data.return?.()
             throw new Error('Iterable not supported by GraphileApolloLink')

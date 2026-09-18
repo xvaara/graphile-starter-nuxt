@@ -44,10 +44,10 @@ async function handleSubmit() {
       }, 1000)
     }
     else {
-      formError.value = result?.errors?.[0]
+      formError.value = result?.error
       toast.add({
         title: 'Creation failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })
@@ -91,7 +91,7 @@ async function handleSubmit() {
             Organization name is already in use
           </div>
           <div v-else-if="slugError" class="text-xs text-yellow-500 mt-1">
-            Error checking for existing organization (error code: ERR_{{ slugError?.graphQLErrors?.[0]?.extensions?.code }})
+            Error checking for existing organization (error code: ERR_{{ getCodeFromError(slugError) }})
           </div>
         </div>
         <UAlert v-if="formError" color="error" class="mt-2">

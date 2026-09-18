@@ -1,4 +1,4 @@
-import type { FetchPolicy, WatchQueryFetchPolicy } from '@apollo/client/core/watchQueryOptions'
+import type { FetchPolicy, WatchQueryFetchPolicy } from '@apollo/client'
 
 export async function useAsyncAuth(fetchPolicy: WatchQueryFetchPolicy | FetchPolicy = 'cache-first'): Promise<{
   isAuthenticated: ComputedRef<boolean>
@@ -9,12 +9,12 @@ export async function useAsyncAuth(fetchPolicy: WatchQueryFetchPolicy | FetchPol
   const user = import.meta.client ? useState<SharedLayout_UserFragment | null>('user', () => null) : ref<SharedLayout_UserFragment | null>(null)
 
   if (!getCurrentInstance()) {
-    if (fetchPolicy === 'cache-and-network') {
+    if (fetchPolicy === 'cache-and-network' || fetchPolicy === 'standby') {
       fetchPolicy = 'cache-first'
     }
     try {
       const { data } = await client.query<SharedQuery>({ query: SharedDocument, fetchPolicy })
-      user.value = data?.currentUser
+      user.value = data?.currentUser ?? null
     }
     catch (error) {
       console.error('Error fetching auth state:', error)
@@ -30,7 +30,7 @@ export async function useAsyncAuth(fetchPolicy: WatchQueryFetchPolicy | FetchPol
     return new Promise((resolve) => {
       const { onResult, onError } = useSharedQuery({ fetchPolicy })
       onResult(({ data }) => {
-        user.value = data?.currentUser
+        user.value = data?.currentUser ?? null
         resolve({
           isAuthenticated: computed(() => !!user.value),
           user: readonly(user),

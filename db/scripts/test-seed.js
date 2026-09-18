@@ -1,3 +1,5 @@
+import { resolve } from 'node:path'
+
 const { writeFile } = require('node:fs').promises
 const pg = require('pg')
 
@@ -14,7 +16,7 @@ async function main() {
   try {
     await pgPool.query('delete from graphile_worker.jobs;')
     await writeFile(
-      `${import.meta.dirname}/../__tests__/jest.watch.hack.ts`,
+      resolve(import.meta.dirname, '../__tests__/jest.watch.hack.ts'),
       `export const ts = ${Date.now()};\n`,
     )
   }

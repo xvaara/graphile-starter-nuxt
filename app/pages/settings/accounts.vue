@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ public: false })
 
-const { data, loading, error } = await useCurrentUserAuthenticationsQuery()
+const { result: data, loading, error } = useCurrentUserAuthenticationsQuery()
 const modalOpen = ref(false)
 const deleting = ref(false)
 const selectedId = ref<string | null>(null)
@@ -51,8 +51,10 @@ async function handleUnlink() {
           </UButton>
         </li>
       </ul>
-      <UModal v-model="modalOpen" title="Are you sure?" :closable="true">
-        <div>If you unlink this account you won’t be able to log in with it any more; please make sure your email is valid.</div>
+      <UModal v-model:open="modalOpen" title="Are you sure?" :close="true">
+        <template #body>
+          <div>If you unlink this account you won’t be able to log in with it any more; please make sure your email is valid.</div>
+        </template>
         <template #footer>
           <UButton color="error" :loading="deleting" @click="handleUnlink">
             Unlink

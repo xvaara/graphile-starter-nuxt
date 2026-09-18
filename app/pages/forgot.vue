@@ -17,7 +17,7 @@ async function handleSubmit() {
         color: 'error',
       })
     }
-    else if (!result.errors) {
+    else if (!result.error) {
       success.value = true
       toast.add({
         title: 'Check your email',
@@ -29,7 +29,7 @@ async function handleSubmit() {
     else {
       toast.add({
         title: 'Request failed',
-        description: result?.errors?.[0]?.message || 'An error occurred',
+        description: result?.error?.message || 'An error occurred',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })

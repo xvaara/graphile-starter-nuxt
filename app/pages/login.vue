@@ -35,7 +35,7 @@ async function handleSubmit() {
         title: 'Logged in successfully',
         description: `Welcome back, ${result.data.login.user.name}!`,
         icon: 'i-heroicons-check-circle',
-        color: 'green',
+        color: 'success',
       })
       await refetchUser()
       navigateTo(returnTo.value)
@@ -45,7 +45,7 @@ async function handleSubmit() {
         title: 'Login failed',
         description: result.error?.message || 'Invalid credentials',
         icon: 'i-heroicons-exclamation-circle',
-        color: 'red',
+        color: 'error',
       })
     }
   }
@@ -56,7 +56,7 @@ async function handleSubmit() {
       title: 'An error occurred',
       description: `Please try again later. Error code: ${code}`,
       icon: 'i-heroicons-exclamation-circle',
-      color: 'red',
+      color: 'error',
     })
   }
 }
@@ -81,7 +81,7 @@ async function handleSubmit() {
             type="text"
             placeholder="username"
             icon="i-heroicons-envelope"
-            :ui="{ icon: { trailing: { pointer: '' } } }"
+
             autocomplete="username"
             required
           />
@@ -93,7 +93,7 @@ async function handleSubmit() {
             type="password"
             placeholder="••••••••"
             icon="i-heroicons-lock-closed"
-            :ui="{ icon: { trailing: { pointer: '' } } }"
+
             autocomplete="current-password"
             required
           />

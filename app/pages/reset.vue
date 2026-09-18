@@ -42,7 +42,7 @@ async function handleSubmit() {
     else {
       toast.add({
         title: 'Reset failed',
-        description: result?.errors?.[0]?.message || 'Invalid or expired token.',
+        description: result?.error?.message || 'Invalid or expired token.',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })

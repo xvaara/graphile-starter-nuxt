@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { user } = await useAsyncAuth()
+const toast = useToast()
 
 definePageMeta({
   name: 'Settings-profile-index',
@@ -13,6 +14,8 @@ const form = reactive({
 const { mutate: updateProfile, error } = useUpdateUserMutation()
 
 async function handleSubmit() {
+  if (!user.value)
+    return
   try {
     await updateProfile({
       id: user.value?.id,
@@ -21,7 +24,6 @@ async function handleSubmit() {
         username: form.username,
       },
     })
-    const toast = useToast()
     toast.add({
       title: 'Profile Updated',
       description: 'Your profile has been successfully updated',

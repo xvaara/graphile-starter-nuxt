@@ -115,13 +115,15 @@ async function confirmDeletion() {
           </UAlert>
         </template>
 
-        <UModal v-model="confirmOpen" title="Send delete account confirmation email?" :loading="doingIt">
-          <p>
-            Before we can delete your account, we need to confirm it's definitely you. We'll send you an email with a link in it, which when clicked will give you the option to delete your account.
-          </p>
-          <p>
-            You should not trigger this unless you're sure you want to delete your account.
-          </p>
+        <UModal v-model:open="confirmOpen" title="Send delete account confirmation email?" :dismissible="!doingIt">
+          <template #body>
+            <p>
+              Before we can delete your account, we need to confirm it's definitely you. We'll send you an email with a link in it, which when clicked will give you the option to delete your account.
+            </p>
+            <p>
+              You should not trigger this unless you're sure you want to delete your account.
+            </p>
+          </template>
           <template #footer>
             <UButton color="primary" :loading="doingIt" class="mr-2" danger @click="doIt">
               Send delete account email
@@ -132,13 +134,15 @@ async function confirmDeletion() {
           </template>
         </UModal>
 
-        <UModal v-model="deleted" title="Account deleted" :closable="false">
-          <div>
-            <p>Your account has been successfully deleted. We wish you all the best.</p>
-            <UButton color="primary" @click="router.push('/')">
-              Return to homepage
-            </UButton>
-          </div>
+        <UModal v-model:open="deleted" title="Account deleted" :close="false" :dismissible="false">
+          <template #body>
+            <div>
+              <p>Your account has been successfully deleted. We wish you all the best.</p>
+              <UButton color="primary" @click="router.push('/')">
+                Return to homepage
+              </UButton>
+            </div>
+          </template>
         </UModal>
       </div>
     </UCard>

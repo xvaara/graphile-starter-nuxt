@@ -18,13 +18,15 @@ function toggleDark() {
           <span class="font-bold text-lg">Postgraphile nuxt starter</span>
         </NuxtLink>
 
-        <UButton
-          color="gray"
-          variant="ghost"
-          :icon="colorMode.value === 'light' ? 'i-heroicons-moon' : 'i-heroicons-sun'"
-          aria-label="Toggle dark mode"
-          @click="toggleDark"
-        />
+        <ClientOnly>
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :icon="colorMode.value === 'light' ? 'i-heroicons-moon' : 'i-heroicons-sun'"
+            aria-label="Toggle dark mode"
+            @click="toggleDark"
+          />
+        </ClientOnly>
       </header>
 
       <main class="flex justify-center items-center min-h-[calc(100vh-160px)]">

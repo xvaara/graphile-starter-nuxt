@@ -112,7 +112,7 @@ async function handleGeneralSubmit() {
     else {
       toast.add({
         title: 'Update failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })
@@ -130,6 +130,9 @@ async function handleGeneralSubmit() {
 
 // Members handlers
 async function handleInvite() {
+  const organizationId = orgData.value?.organizationBySlug?.id
+  if (!organizationId)
+    return
   if (inviteInProgress.value || !inviteForm.value.inviteText)
     return
 
@@ -139,7 +142,7 @@ async function handleInvite() {
 
   try {
     await inviteToOrganization({
-      organizationId: orgData.value?.organizationBySlug?.id,
+      organizationId,
       email: isEmail ? inviteText : null,
       username: isEmail ? null : inviteText,
     })
@@ -163,9 +166,12 @@ async function handleInvite() {
 }
 
 async function handleRemoveMember(userId: string) {
+  const organizationId = orgData.value?.organizationBySlug?.id
+  if (!organizationId)
+    return
   try {
     await removeMember({
-      organizationId: orgData.value?.organizationBySlug?.id,
+      organizationId,
       userId,
     })
     toast.add({
@@ -184,9 +190,12 @@ async function handleRemoveMember(userId: string) {
 }
 
 async function handleTransferOwnership(userId: string) {
+  const organizationId = orgData.value?.organizationBySlug?.id
+  if (!organizationId)
+    return
   try {
     await transferOwnership({
-      organizationId: orgData.value?.organizationBySlug?.id,
+      organizationId,
       userId,
     })
     toast.add({
@@ -205,9 +214,12 @@ async function handleTransferOwnership(userId: string) {
 }
 
 async function handleTransferBillingContact(userId: string) {
+  const organizationId = orgData.value?.organizationBySlug?.id
+  if (!organizationId)
+    return
   try {
     await transferBillingContact({
-      organizationId: orgData.value?.organizationBySlug?.id,
+      organizationId,
       userId,
     })
     toast.add({
@@ -261,12 +273,12 @@ async function confirmDelete() {
         icon: 'i-heroicons-check-circle',
         color: 'success',
       })
-      setTimeout(() => navigateTo('/'), 1000)
+      setTimeout(navigateTo, 1000, '/')
     }
     else {
       toast.add({
         title: 'Delete failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })
@@ -407,17 +419,17 @@ async function confirmDelete() {
                                 label: 'Remove member',
                                 icon: 'i-heroicons-user-minus',
                                 color: 'error' as const,
-                                click: () => handleRemoveMember(userId),
+                                onSelect: () => handleRemoveMember(userId),
                               },
                               member.isOwner ? null : {
                                 label: 'Make owner',
                                 icon: 'i-heroicons-key',
-                                click: () => handleTransferOwnership(userId),
+                                onSelect: () => handleTransferOwnership(userId),
                               },
                               member.isBillingContact ? null : {
                                 label: 'Make billing contact',
                                 icon: 'i-heroicons-credit-card',
-                                click: () => handleTransferBillingContact(userId),
+                                onSelect: () => handleTransferBillingContact(userId),
                               },
                             ].filter((item): item is NonNullable<typeof item> => item !== null)
                           })()"
@@ -434,9 +446,9 @@ async function confirmDelete() {
                   class="mt-4"
                 >
                   <UPagination
-                    v-model="page"
+                    v-model:page="page"
                     :total="membersData.organizationBySlug.organizationMemberships.totalCount"
-                    :per-page="RESULTS_PER_PAGE"
+                    :items-per-page="RESULTS_PER_PAGE"
                   />
                 </div>
               </div>
@@ -460,7 +472,7 @@ async function confirmDelete() {
               </UButton>
             </div>
           </UCard>
-          <UModal v-model:open="showDeleteModal" title="Delete Organization?" :closable="true">
+          <UModal v-model:open="showDeleteModal" title="Delete Organization?" :close="true">
             <template #body>
               <div class="space-y-4">
                 <div class="text-red-600">

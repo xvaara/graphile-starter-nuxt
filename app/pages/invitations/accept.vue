@@ -32,7 +32,7 @@ async function handleAccept() {
     else {
       toast.add({
         title: 'Accept failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })
