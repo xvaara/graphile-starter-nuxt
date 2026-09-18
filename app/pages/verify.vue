@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation } from '@vue/apollo-composable'
+import { useMutation } from '@vue/apollo-composable/compat'
 import { graphql } from '~/graphql'
 
 definePageMeta({
@@ -58,10 +58,10 @@ async function handleVerify() {
       setTimeout(() => router.push('/'), 2000)
     }
     else {
-      formError.value = result?.errors?.[0]
+      formError.value = result?.error
       toast.add({
         title: 'Verification failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })

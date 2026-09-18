@@ -20,3 +20,10 @@ declare module '#auth-utils' {
     session_id: string
   }
 }
+
+// Runtime implementation lives exclusively in Nitro; the app consumes the link.
+declare module 'h3' {
+  interface H3EventContext {
+    graphileApolloLink: import('@apollo/client').ApolloLink
+  }
+}

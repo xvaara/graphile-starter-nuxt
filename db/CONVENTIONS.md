@@ -1,13 +1,13 @@
 # Conventions used in this database schema:
 
-### Placeholders
+## Placeholders
 
 We're using placeholders to make this project flexible for new users/projects;
 see `.gmrc` (documented in the `graphile-migrate` README) for the full list of
 placeholders, but the main one is `:DATABASE_VISITOR` which is the role that
 GraphQL users use and is where we grant most of the permissions.
 
-### Naming
+## Naming
 
 - snake_case for tables, functions, columns (avoids having to put them in quotes
   in most cases)
@@ -21,7 +21,7 @@ GraphQL users use and is where we grant most of the permissions.
 - prefer lowercase over UPPERCASE, except for the `NEW`, `OLD` and `TG_OP`
   keywords. (This is Benjie's personal preference.)
 
-### Security
+## Security
 
 - all `security definer` functions should define `set search_path from current`
   due to `CVE-2018-1058`
@@ -33,20 +33,20 @@ GraphQL users use and is where we grant most of the permissions.
   relations as permission boundaries
 - `grant insert` and `grant update` must ALWAYS specify a column list
 
-### Explicitness
+## Explicitness
 
 - all functions should explicitly state immutable/stable/volatile
 - do not override search_path during migrations or in server code - prefer to
   explicitly list schemas
 
-### Functions
+## Functions
 
 - if a function can be expressed as a single SQL statement it should use the
   `sql` language if possible. Other functions should use `plpgsql`.
 - be aware of the function inlining rules:
   https://wiki.postgresql.org/wiki/Inlining_of_SQL_functions
 
-### Relations
+## Relations
 
 - all foreign key `references` statements should have `on delete` clauses. Some
   may also want `on update` clauses, but that's optional
@@ -56,14 +56,14 @@ GraphQL users use and is where we grant most of the permissions.
 - defining things (primary key, checks, unique constraints, etc) within the
   `create table` statement is preferable to adding them after
 
-### General conventions (e.g. for PostGraphile compatibility)
+## General conventions (e.g. for PostGraphile compatibility)
 
 - avoid `plv8` and other extensions that aren't built in because they can be
   complex for people to install
 - @omit smart comments should be used heavily to remove fields we don't
   currently need in GraphQL - we can always remove them later
 
-### Definitions
+## Definitions
 
 Please adhere to the following templates (respecting newlines):
 

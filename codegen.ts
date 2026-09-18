@@ -10,7 +10,7 @@ const config: CodegenConfig = {
       object: false,
     },
     scalars: {
-      // UUID: "string",
+      UUID: 'string',
       // Username: "string",
       // Url: "string",
       // Tag: "string",

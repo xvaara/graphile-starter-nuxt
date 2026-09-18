@@ -1,4 +1,4 @@
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable/compat'
 
 export function useAsyncQuery<TResult = any, TVariables = any>(
   document: any,

@@ -1,4 +1,4 @@
-import { useQuery, useSubscription } from '@vue/apollo-composable'
+import { useQuery, useSubscription } from '@vue/apollo-composable/compat'
 import { graphql, useFragment } from '~/graphql'
 
 // Define the shared layout user fragment (matching SharedLayout_User in GraphQL files)
@@ -66,6 +66,8 @@ export const CurrentUserUpdatedSubscription = graphql(/* GraphQL */ `
 export function useAuth() {
   const nuxtApp = useNuxtApp()
   const client = nuxtApp.$apollo
+  const toast = useToast()
+  const router = useRouter()
 
   // Ensure we're in a Vue lifecycle context
   if (!getCurrentInstance()) {
@@ -90,9 +92,7 @@ export function useAuth() {
   onResult(({ data }) => {
     if (data) {
       const queryFragment = useFragment(SharedLayoutQueryFragment, data)
-      if (queryFragment.currentUser) {
-        user.value = useFragment(SharedLayoutUserFragment, queryFragment.currentUser)
-      }
+      user.value = queryFragment.currentUser ? useFragment(SharedLayoutUserFragment, queryFragment.currentUser) : null
     }
   })
 
@@ -108,30 +108,23 @@ export function useAuth() {
       console.error('error subscribing to current user updates', error)
     })
   }
-  function logout() {
-    return new Promise((resolve) => {
-      client.mutate({
-        mutation: LogoutMutation,
-      }).then(() => {
-        client.resetStore()
-        nuxtApp.$apolloWSClient.terminate()
-        const toast = useToast()
-        user.value = null
-
-        toast.add({
-          title: 'Logged out',
-          description: 'See you soon!',
-          icon: 'i-heroicons-arrow-right-start-on-rectangle',
-          color: 'success',
-        })
-        setTimeout(() => navigateTo('/'), 0)
-        resolve(true)
-      })
+  async function logout() {
+    await client.mutate({ mutation: LogoutMutation })
+    user.value = null
+    nuxtApp.$apolloWSClient?.terminate()
+    await client.resetStore()
+    toast.add({
+      title: 'Logged out',
+      description: 'See you soon!',
+      icon: 'i-heroicons-arrow-right-start-on-rectangle',
+      color: 'success',
     })
+    await router.push('/')
+    return true
   }
 
   async function restartSession() {
-    nuxtApp.$apolloWSClient.terminate()
+    nuxtApp.$apolloWSClient?.terminate()
     const data = await refetch()
     if (data?.data) {
       const queryFragment = useFragment(SharedLayoutQueryFragment, data.data)

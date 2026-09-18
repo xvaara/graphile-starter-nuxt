@@ -1,7 +1,7 @@
-import type { FetchPolicy, WatchQueryFetchPolicy } from '@apollo/client/core/watchQueryOptions'
+import type { FetchPolicy, WatchQueryFetchPolicy } from '@apollo/client'
 import type { DeepReadonly } from 'vue'
 import type { SharedLayout_UserFragment } from '~/graphql/graphql'
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable/compat'
 import { useFragment } from '~/graphql'
 
 import { SharedLayoutQueryFragment, SharedLayoutUserFragment, SharedQuery } from './useAuth'
@@ -15,13 +15,13 @@ export async function useAsyncAuth(fetchPolicy: WatchQueryFetchPolicy | FetchPol
   const user = import.meta.client ? useState('user', () => useFragment(SharedLayoutUserFragment, null)) : ref(useFragment(SharedLayoutUserFragment, null))
 
   if (!getCurrentInstance()) {
-    if (fetchPolicy === 'cache-and-network') {
+    if (fetchPolicy === 'cache-and-network' || fetchPolicy === 'standby') {
       fetchPolicy = 'cache-first'
     }
     try {
       const { data } = await client.query({ query: SharedQuery, fetchPolicy })
       const queryFragment = useFragment(SharedLayoutQueryFragment, data)
-      user.value = useFragment(SharedLayoutUserFragment, queryFragment.currentUser)
+      user.value = useFragment(SharedLayoutUserFragment, queryFragment?.currentUser ?? null)
     }
     catch (error) {
       console.error('Error fetching auth state:', error)
@@ -38,7 +38,7 @@ export async function useAsyncAuth(fetchPolicy: WatchQueryFetchPolicy | FetchPol
       const { onResult, onError } = useQuery(SharedQuery, null, { fetchPolicy })
       onResult(({ data }) => {
         const queryFragment = useFragment(SharedLayoutQueryFragment, data)
-        user.value = useFragment(SharedLayoutUserFragment, queryFragment.currentUser)
+        user.value = useFragment(SharedLayoutUserFragment, queryFragment?.currentUser ?? null)
         resolve({
           isAuthenticated: computed(() => !!user.value),
           user: readonly(user),

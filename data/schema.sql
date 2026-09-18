@@ -2,12 +2,15 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.4 (Ubuntu 13.4-0ubuntu0.21.04.1)
--- Dumped by pg_dump version 13.4 (Ubuntu 13.4-0ubuntu0.21.04.1)
+\restrict Wwo7K2fC94LpqY7K9lcyahK9pgMsX3abSapdTA7JQVPRzY98sA8avcuUBYzXH7C
+
+-- Dumped from database version 18.6 (Homebrew)
+-- Dumped by pg_dump version 18.6 (Homebrew)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -35,6 +38,13 @@ CREATE SCHEMA app_private;
 --
 
 CREATE SCHEMA app_public;
+
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
 
 
 --
@@ -2497,9 +2507,7 @@ GRANT USAGE ON SCHEMA app_public TO graphile_starter_visitor;
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
 --
 
-REVOKE ALL ON SCHEMA public FROM postgres;
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-GRANT ALL ON SCHEMA public TO graphile_starter;
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT USAGE ON SCHEMA public TO graphile_starter_visitor;
 
 
@@ -2893,61 +2901,54 @@ GRANT SELECT,DELETE ON TABLE app_public.user_authentications TO graphile_starter
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: app_hidden; Owner: -
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_hidden REVOKE ALL ON SEQUENCES  FROM graphile_starter;
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_hidden GRANT SELECT,USAGE ON SEQUENCES  TO graphile_starter_visitor;
+ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_hidden GRANT SELECT,USAGE ON SEQUENCES TO graphile_starter_visitor;
 
 
 --
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: app_hidden; Owner: -
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_hidden REVOKE ALL ON FUNCTIONS  FROM PUBLIC;
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_hidden REVOKE ALL ON FUNCTIONS  FROM graphile_starter;
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_hidden GRANT ALL ON FUNCTIONS  TO graphile_starter_visitor;
+ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_hidden GRANT ALL ON FUNCTIONS TO graphile_starter_visitor;
 
 
 --
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: app_public; Owner: -
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_public REVOKE ALL ON SEQUENCES  FROM graphile_starter;
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_public GRANT SELECT,USAGE ON SEQUENCES  TO graphile_starter_visitor;
+ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_public GRANT SELECT,USAGE ON SEQUENCES TO graphile_starter_visitor;
 
 
 --
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: app_public; Owner: -
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_public REVOKE ALL ON FUNCTIONS  FROM PUBLIC;
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_public REVOKE ALL ON FUNCTIONS  FROM graphile_starter;
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_public GRANT ALL ON FUNCTIONS  TO graphile_starter_visitor;
+ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA app_public GRANT ALL ON FUNCTIONS TO graphile_starter_visitor;
 
 
 --
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: -
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA public REVOKE ALL ON SEQUENCES  FROM graphile_starter;
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA public GRANT SELECT,USAGE ON SEQUENCES  TO graphile_starter_visitor;
+ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA public GRANT SELECT,USAGE ON SEQUENCES TO graphile_starter_visitor;
 
 
 --
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: public; Owner: -
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA public REVOKE ALL ON FUNCTIONS  FROM PUBLIC;
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA public REVOKE ALL ON FUNCTIONS  FROM graphile_starter;
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA public GRANT ALL ON FUNCTIONS  TO graphile_starter_visitor;
+ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter IN SCHEMA public GRANT ALL ON FUNCTIONS TO graphile_starter_visitor;
 
 
 --
 -- Name: DEFAULT PRIVILEGES FOR FUNCTIONS; Type: DEFAULT ACL; Schema: -; Owner: -
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter REVOKE ALL ON FUNCTIONS  FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES FOR ROLE graphile_starter REVOKE ALL ON FUNCTIONS FROM PUBLIC;
 
 
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict Wwo7K2fC94LpqY7K9lcyahK9pgMsX3abSapdTA7JQVPRzY98sA8avcuUBYzXH7C
 

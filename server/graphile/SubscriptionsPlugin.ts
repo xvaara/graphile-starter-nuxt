@@ -1,7 +1,7 @@
-import type { PgClassExpressionStep } from '@dataplan/pg'
-import { jsonParse } from '@dataplan/json'
-import { access, context, lambda, listen, SafeError } from 'grafast'
-import { gql, makeExtendSchemaPlugin } from 'graphile-utils'
+import type { Step } from 'postgraphile/grafast'
+import { jsonParse } from 'postgraphile/@dataplan/json'
+import { access, context, lambda, listen, SafeError } from 'postgraphile/grafast'
+import { extendSchema, gql } from 'postgraphile/utils'
 
 /*
  * PG NOTIFY events are sent via a channel, this function helps us determine
@@ -11,7 +11,7 @@ import { gql, makeExtendSchemaPlugin } from 'graphile-utils'
  * NOTE: channels are limited to 63 characters in length (this is a PostgreSQL
  * limitation).
  */
-function currentUserTopicByUserId(userId: number | null) {
+function currentUserTopicByUserId(userId: string | null) {
   if (userId) {
     return `graphql:user:${userId}`
   }
@@ -33,7 +33,7 @@ function currentUserTopicByUserId(userId: number | null) {
  *
  * And see the database trigger function `app_public.tg__graphql_subscription()`.
  */
-const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
+const SubscriptionsPlugin = extendSchema((build) => {
   const currentUserIdResource
     = build.input.pgRegistry.pgResources.current_user_id
   if (!currentUserIdResource) {
@@ -70,10 +70,7 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
             const $pgSubscriber = context().get('pgSubscriber')
             // We have the users session ID, but to get their actual ID we need to ask the database.
             const $userId
-              = currentUserIdResource.execute() as PgClassExpressionStep<
-                any,
-                any
-              >
+              = currentUserIdResource.execute() as Step<string | null>
             const $topic = lambda($userId, currentUserTopicByUserId)
             return listen($pgSubscriber, $topic, e => e)
           },
@@ -83,7 +80,7 @@ const SubscriptionsPlugin = makeExtendSchemaPlugin((build) => {
         },
       },
       UserSubscriptionPayload: {
-        user($obj) {
+        user($obj: Step<TgGraphQLSubscriptionPayload>) {
           const $id = access($obj, 'subject')
           return usersResource.get({ id: $id })
         },

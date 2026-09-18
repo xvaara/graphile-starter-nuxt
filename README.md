@@ -69,7 +69,7 @@ You can sponsor my [Flow tools project](https://github.com/sponsors/flow-tools) 
 
 You can contact me as @xvaara on various social medias or through my company [Mentalhouse Oy](https://mentalhouse.fi/) if you have a postgraphile related work that need to be done.
 
-# Nuxt GraphQL Application
+## Nuxt GraphQL Application
 
 This application has been converted to use the GraphQL Codegen **client preset** for better type safety and developer experience.
 

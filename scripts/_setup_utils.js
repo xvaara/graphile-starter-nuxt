@@ -1,5 +1,6 @@
 import { promises as fsp } from 'node:fs'
 import os from 'node:os'
+import { resolve } from 'node:path'
 import { safeRandomString } from './lib/random.js'
 
 export { readDotenv, withDotenvUpdater } from './lib/dotenv.js'
@@ -196,7 +197,7 @@ export function updateDotenv(add, answers) {
 
 export async function checkGit() {
   try {
-    const gitStat = await fsp.stat(`${import.meta.dirname}/../.git`)
+    const gitStat = await fsp.stat(resolve(import.meta.dirname, '../.git'))
     if (!gitStat || !gitStat.isDirectory()) {
       throw new Error('No .git folder found')
     }

@@ -31,3 +31,6 @@ logs
 # Generated files
 app/graphql/*.ts
 
+
+# Local module setup state
+.nuxtrc

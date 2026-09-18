@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable/compat'
 import { graphql, useFragment } from '~/graphql'
 
 const route = useRoute()

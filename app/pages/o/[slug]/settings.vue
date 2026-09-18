@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable/compat'
 import { graphql, useFragment } from '~/graphql'
 
 const route = useRoute()
@@ -267,7 +267,7 @@ async function handleGeneralSubmit() {
     else {
       toast.add({
         title: 'Update failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })
@@ -285,6 +285,8 @@ async function handleGeneralSubmit() {
 
 // Members handlers
 async function handleInvite() {
+  if (!organization.value)
+    return
   if (inviteInProgress.value || !inviteForm.value.inviteText)
     return
 
@@ -294,7 +296,7 @@ async function handleInvite() {
 
   try {
     await inviteToOrganization({
-      organizationId: organization.value?.id,
+      organizationId: organization.value.id,
       email: isEmail ? inviteText : null,
       username: isEmail ? null : inviteText,
     })
@@ -318,9 +320,11 @@ async function handleInvite() {
 }
 
 async function handleRemoveMember(userId: string) {
+  if (!organization.value)
+    return
   try {
     await removeMember({
-      organizationId: organization.value?.id,
+      organizationId: organization.value.id,
       userId,
     })
     toast.add({
@@ -339,9 +343,11 @@ async function handleRemoveMember(userId: string) {
 }
 
 async function handleTransferOwnership(userId: string) {
+  if (!organization.value)
+    return
   try {
     await transferOwnership({
-      organizationId: organization.value?.id,
+      organizationId: organization.value.id,
       userId,
     })
     toast.add({
@@ -360,9 +366,11 @@ async function handleTransferOwnership(userId: string) {
 }
 
 async function handleTransferBillingContact(userId: string) {
+  if (!organization.value)
+    return
   try {
     await transferBillingContact({
-      organizationId: organization.value?.id,
+      organizationId: organization.value.id,
       userId,
     })
     toast.add({
@@ -416,12 +424,12 @@ async function confirmDelete() {
         icon: 'i-heroicons-check-circle',
         color: 'success',
       })
-      setTimeout(() => navigateTo('/'), 1000)
+      setTimeout(navigateTo, 1000, '/')
     }
     else {
       toast.add({
         title: 'Delete failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })

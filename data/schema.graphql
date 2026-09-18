@@ -1203,6 +1203,9 @@ input UserAuthenticationCondition {
   """Checks for equality with the object’s `id` field."""
   id: UUID
 
+  """Checks for equality with the object’s `identifier` field."""
+  identifier: String
+
   """Checks for equality with the object’s `service` field."""
   service: String
 
@@ -1212,6 +1215,8 @@ input UserAuthenticationCondition {
 
 """Methods to use when ordering `UserAuthentication`."""
 enum UserAuthenticationsOrderBy {
+  IDENTIFIER_ASC
+  IDENTIFIER_DESC
   ID_ASC
   ID_DESC
   NATURAL
@@ -1248,6 +1253,9 @@ A condition to be used against `UserEmail` object types. All fields are tested
 for equality and combined with a logical ‘and.’
 """
 input UserEmailCondition {
+  """Checks for equality with the object’s `email` field."""
+  email: String
+
   """Checks for equality with the object’s `id` field."""
   id: UUID
 
@@ -1292,6 +1300,8 @@ type UserEmailsEdge {
 
 """Methods to use when ordering `UserEmail`."""
 enum UserEmailsOrderBy {
+  EMAIL_ASC
+  EMAIL_DESC
   ID_ASC
   ID_DESC
   IS_PRIMARY_ASC

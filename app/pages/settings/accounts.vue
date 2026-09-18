@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable/compat'
 import { graphql } from '~/graphql'
 
 definePageMeta({ public: false })
@@ -67,7 +67,7 @@ async function handleUnlink(authId: string) {
     else {
       toast.add({
         title: 'Unlink failed',
-        description: response?.errors?.[0]?.message || 'Unknown error',
+        description: response?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })

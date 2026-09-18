@@ -1,3 +1,7 @@
+import { copyFile, mkdir } from 'node:fs/promises'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 const isDev = process.env.NODE_ENV === 'development'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -7,8 +11,12 @@ export default defineNuxtConfig({
   experimental: {
     asyncContext: true,
   },
-  future: {
-    compatibilityVersion: 4,
+  vite: {
+    build: {
+      rolldownOptions: {
+        output: { minify: { compress: { dropConsole: !isDev, dropDebugger: !isDev } } },
+      },
+    },
   },
   build: {
     transpile: [],
@@ -33,6 +41,12 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
+    hooks: {
+      async compiled(nitro) {
+        await mkdir(nitro.options.output.serverDir, { recursive: true })
+        await copyFile(fileURLToPath(new URL('./db/tags.jsonc', import.meta.url)), join(nitro.options.output.serverDir, 'tags.jsonc'))
+      },
+    },
     experimental: {
       websocket: true,
     },
@@ -41,18 +55,13 @@ export default defineNuxtConfig({
     strict: !isDev,
     headers: false,
     csrf: {
-      enabled: false,
+      enabled: true,
       addCsrfTokenToEventCtx: true,
     },
-    removeLoggers: !isDev,
-  },
-  routeRules: {
-    // TODO: figure how ruru can be configured to not check csrf for graphql
-    // '/api/graphql': {
-    //   csurf: false,
-    // },
+    removeLoggers: false,
   },
   ui: {
+    fonts: false,
   },
   app: {
     pageTransition: { name: 'page', mode: 'out-in' },
@@ -64,6 +73,7 @@ export default defineNuxtConfig({
       rootUrl: process.env.ROOT_URL || 'http://localhost:3000',
     },
     session: {
+      password: process.env.NUXT_SESSION_PASSWORD || '',
       cookie: {
         secure: !isDev,
       },

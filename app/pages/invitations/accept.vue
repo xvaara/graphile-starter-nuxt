@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable/compat'
 import { graphql } from '~/graphql'
 
 const route = useRoute()
@@ -54,7 +54,7 @@ async function handleAccept() {
     else {
       toast.add({
         title: 'Accept failed',
-        description: mutationResult?.errors?.[0]?.message || 'Unknown error',
+        description: mutationResult?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })

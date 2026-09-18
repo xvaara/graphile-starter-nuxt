@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
+import { resolve } from 'node:path'
 
-const ENVFILE = `${import.meta.dirname}/../.env`
+const ENVFILE = resolve(import.meta.dirname, '../.env')
 
 if (!fs.existsSync(ENVFILE)) {
   console.error('🛠️  Please run \'bun setup\' before running \'bun start\'')

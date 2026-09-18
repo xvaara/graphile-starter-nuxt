@@ -1,45 +1,25 @@
-import type { GraphQLError } from 'graphql'
+import type { ErrorLike } from '@apollo/client'
+import { CombinedGraphQLErrors } from '@apollo/client/errors'
 
-export function extractError(error: null): null
-export function extractError(error: Error): Error
-export function extractError(error: GraphQLError): GraphQLError
-export function extractError(
-  error: null | Error | GraphQLError
-): null | Error | GraphQLError
-export function extractError(
-  error: null | Error | GraphQLError,
-): null | Error | GraphQLError {
-  return (
-    (error
-      && 'graphQLErrors' in error
-      && error.graphQLErrors
-      && error.graphQLErrors.length
-      && error.graphQLErrors[0])
-    || error
-  )
+interface PgError {
+  message: string
+  code?: string
+  fields?: string[]
+  extensions?: { code?: string, fields?: string[], exception?: PgError }
 }
 
-export function getExceptionFromError(
-  error: null | Error | GraphQLError,
-):
-  | (Error & {
-    code?: string
-    fields?: string[]
-    extensions?: { code?: string, fields?: string[] }
-  })
-  | null {
-  // @ts-expect-error ignore null
-  const graphqlError: GraphQLError = extractError(error)
-  const exception
-    = graphqlError
-      && graphqlError.extensions
-      && graphqlError.extensions.exception
-  return (exception || graphqlError || error) as Error | null
+export function extractError(error: ErrorLike | null | undefined): PgError | null {
+  if (!error)
+    return null
+  return CombinedGraphQLErrors.is(error) ? error.errors[0] ?? error : error
 }
 
-export function getCodeFromError(
-  error: null | Error | GraphQLError,
-): null | string {
+export function getExceptionFromError(error: ErrorLike | null | undefined): PgError | null {
+  const graphqlError = extractError(error)
+  return graphqlError?.extensions?.exception ?? graphqlError
+}
+
+export function getCodeFromError(error: ErrorLike | null | undefined): string | null {
   const err = getExceptionFromError(error)
   return err?.extensions?.code ?? err?.code ?? null
 }

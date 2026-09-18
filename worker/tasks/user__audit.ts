@@ -16,8 +16,8 @@ type AccountAction =
   | "removed_email"; //
  */
 
-type UserAuditPayload =
-  | {
+type UserAuditPayload
+  = | {
     type: 'added_email'
     user_id: string
     current_user_id: string

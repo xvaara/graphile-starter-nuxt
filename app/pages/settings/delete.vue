@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation } from '@vue/apollo-composable'
+import { useMutation } from '@vue/apollo-composable/compat'
 import { graphql } from '~/graphql'
 
 definePageMeta({ public: false })

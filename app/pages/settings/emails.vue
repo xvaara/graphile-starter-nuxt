@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable/compat'
 import { graphql, useFragment } from '~/graphql'
 
 definePageMeta({ public: false })
@@ -143,10 +143,10 @@ async function handleAddEmail() {
       })
     }
     else {
-      formError.value = result?.errors?.[0]
+      formError.value = result?.error
       toast.add({
         title: 'Add email failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })
@@ -177,7 +177,7 @@ async function handleDeleteEmail(emailId: string) {
     else {
       toast.add({
         title: 'Delete failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })
@@ -207,7 +207,7 @@ async function handleMakePrimary(emailId: string) {
     else {
       toast.add({
         title: 'Update failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })
@@ -237,7 +237,7 @@ async function handleResendVerification(emailId: string) {
     else {
       toast.add({
         title: 'Resend failed',
-        description: result?.errors?.[0]?.message || 'Unknown error',
+        description: result?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })

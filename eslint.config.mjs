@@ -19,6 +19,15 @@ export default withNuxt(
       },
     },
     {
+      files: ['tests/**/*'],
+      rules: {
+        'node/prefer-global/process': 'off',
+        'antfu/no-top-level-await': 'off',
+        'test/no-import-node-test': 'off',
+        'no-console': 'off',
+      },
+    },
+    {
       files: ['scripts/**/*'],
       rules: {
         'no-console': 'off',

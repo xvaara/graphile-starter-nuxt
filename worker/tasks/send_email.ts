@@ -8,7 +8,7 @@ import * as nodemailer from 'nodemailer'
 import getTransport from '../transport'
 
 declare global {
-  // eslint-disable-next-line no-var, vars-on-top
+  // eslint-disable-next-line vars-on-top
   var TEST_EMAILS: any[]
 }
 
@@ -81,13 +81,13 @@ export default task
 
 const templatePromises: Record<
   string,
-  Promise<(variables: Record<string, any>) => string>
+  Promise<(variables: Record<string, any>) => Promise<string>>
 > = {}
 function loadTemplate(template: string) {
   if (isDev || !templatePromises[template]) {
     templatePromises[template] = (async () => {
       // Disallow `..` segments and double-check the resolved path
-      if (!template.match(/^[\w.-]+$/) || template.includes('..')) {
+      if (!/^[\w.-]+$/.test(template) || template.includes('..')) {
         throw new Error(`Disallowed template name '${template}'`)
       }
       const templateString = await readFile(
@@ -97,13 +97,13 @@ function loadTemplate(template: string) {
       const templateFn = lodashTemplate(templateString, {
         escape: /\[\[([\s\S]+?)\]\]/g,
       })
-      return (variables: { [varName: string]: any }) => {
+      return async (variables: { [varName: string]: any }) => {
         const mjml = templateFn({
           projectName,
           legalText,
           ...variables,
         })
-        const { html, errors } = mjml2html(mjml)
+        const { html, errors } = await mjml2html(mjml)
         if (errors && errors.length) {
           console.error(errors)
         }

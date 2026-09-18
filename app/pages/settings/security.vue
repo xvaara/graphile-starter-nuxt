@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable/compat'
 import { graphql } from '~/graphql'
 
 definePageMeta({ public: false })
@@ -72,10 +72,10 @@ async function handleSubmit() {
       state.confirmPassword = ''
     }
     else {
-      formError.value = response?.errors?.[0] || new Error('Failed to change password')
+      formError.value = response?.error || new Error('Failed to change password')
       toast.add({
         title: 'Password change failed',
-        description: response?.errors?.[0]?.message || 'Unknown error',
+        description: response?.error?.message || 'Unknown error',
         icon: 'i-heroicons-exclamation-circle',
         color: 'error',
       })

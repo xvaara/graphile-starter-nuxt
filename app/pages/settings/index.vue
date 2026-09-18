@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation } from '@vue/apollo-composable'
+import { useMutation } from '@vue/apollo-composable/compat'
 import { useAsyncQuery } from '~/composables/useAsyncQuery'
 import { graphql, useFragment } from '~/graphql'
 
@@ -55,9 +55,11 @@ const form = reactive({
 const { mutate: updateProfile } = useMutation(updateUserMutation)
 
 async function handleSubmit() {
+  if (!user.value)
+    return
   try {
     await updateProfile({
-      id: user.value?.id,
+      id: user.value.id,
       patch: {
         name: form.name,
         username: form.username,

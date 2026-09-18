@@ -1,5 +1,5 @@
 import { GraphQLError } from 'graphql'
-import camelCase from 'lodash-es/camelCase'
+import camelCase from 'lodash-es/camelCase.js'
 
 const isDev = process.env.NODE_ENV === 'development'
 const isTest = process.env.NODE_ENV === 'test'
