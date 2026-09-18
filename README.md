@@ -37,7 +37,7 @@ aforementioned tutorial, but it's still an incredibly valuable resource.
 
 ## Status
 
-This starter uses the beta version of Graphile, it is missing some features, has no working tests and the components are created with AI agent converting from the original next.js ones and then fixed to work somewhat correctly.
+This starter uses PostGraphile 5, Nuxt 4, Nuxt UI 4 and URQL. Safe smoke and rendering tests cover the core integration; the legacy database-reset test harness remains unsupported. See [dependency upgrade and validation notes](docs/dependency-upgrade.md). Some application flows remain incomplete.
 
 Use at your own risk. Probably not ready for production.
 

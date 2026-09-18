@@ -152,10 +152,10 @@ const _hasUnverifiedEmail = computed(() => user.value?.isVerified === false)
 
             <ul class="space-y-2">
               <li>
-                <ULink href="/docs">Documentation</ULink>
+                <ULink href="https://nuxt.com/docs" external>Documentation</ULink>
               </li>
               <li>
-                <ULink href="/api/ruru">GraphQL Playground</ULink>
+                <ULink href="/api/ruru" external>GraphQL Playground</ULink>
               </li>
               <li>
                 <ULink href="https://github.com/xvaara/project" external>GitHub Repository</ULink>

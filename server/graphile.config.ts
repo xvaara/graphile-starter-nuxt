@@ -1,16 +1,13 @@
+import RuruCsrfPlugin from './graphile/RuruCsrfPlugin'
 // @ts-check
-import { makePgService } from "@dataplan/pg/adaptors/pg";
+import { makePgService } from "postgraphile/adaptors/pg";
 import { PostGraphileAmberPreset} from "postgraphile/presets/amber";
 import { makeV4Preset } from "postgraphile/presets/v4";
-import { makePgSmartTagsFromFilePlugin } from "postgraphile/utils";
-// import { PostGraphileConnectionFilterPreset } from "postgraphile-plugin-connection-filter";
-// import { PgAggregatesPreset } from "@graphile/pg-aggregates";
-// import { PgManyToManyPreset } from "@graphile-contrib/pg-many-to-many";
+import { jsonPgSmartTags } from "postgraphile/utils";
+import { loadSmartTagsFile } from "./graphile/smartTagsFile";
+import GraphQLPolicyPlugin from "./graphile/GraphQLPolicyPlugin";
 import { PgSimplifyInflectionPreset } from "@graphile/simplify-inflection";
-// import { PersistedPlugin } from "@grafserv/persisted";
-// import { PgOmitArchivedPlugin } from "@graphile-contrib/pg-omit-archived";
-import { resolve } from "path";
-import { NodePlugin } from "graphile-build";
+import { NodePlugin } from "postgraphile/graphile-build";
 
 import { H3Event } from "h3";
 
@@ -23,21 +20,19 @@ import RemoveQueryQueryPlugin from "./graphile/RemoveQueryQueryPlugin";
 import SubscriptionsPlugin from "./graphile/SubscriptionsPlugin";
 import handleErrors from "./utils/handleErrors";
 
-import { getUserSession } from '~~/node_modules/nuxt-auth-utils/dist/runtime/server/utils/session'
+import { getUserSession, setUserSession, clearUserSession } from '~~/node_modules/nuxt-auth-utils/dist/runtime/server/utils/session'
 
 import type { Pool } from "pg";
 
 interface IPostGraphileOptionsOptions {
   authPgPool: InstanceType<typeof Pool>;
-  rootPgPool?: InstanceType<typeof Pool>;
+  rootPgPool: InstanceType<typeof Pool>;
 }
 
 // For configuration file details, see: https://postgraphile.org/postgraphile/next/config
 
-const TagsFilePlugin = makePgSmartTagsFromFilePlugin(
-  // todo make sure this works in build version
-  resolve(`./db/tags.jsonc`)
-);
+// Validate exposure rules before PostGraphile enters its retryable gather phase.
+const TagsFilePlugin = jsonPgSmartTags(loadSmartTagsFile().json);
 
 type UUID = string;
 
@@ -58,24 +53,21 @@ function uuidOrNull(input: string | number | null | undefined): UUID | null {
 }
 
 const isDev = process.env.NODE_ENV === "development";
-//const isTest = process.env.NODE_ENV === "test";
-
 
 export function getPreset({
   authPgPool,
   rootPgPool,
 }: IPostGraphileOptionsOptions) {
   const preset: GraphileConfig.Preset = {
+    plugins: [RuruCsrfPlugin, GraphQLPolicyPlugin],
     pgServices: [
       makePgService({
-        // This is so that PostGraphile installs the watch fixtures
-        superuserConnectionString: process.env.DATABASE_URL,
-
+        // Use the existing pool without installing schema-watch fixtures.
         pool: authPgPool,
 
         schemas: ["app_public"],
 
-        // Enable LISTEN/NOTIFY (for subscriptions/watch mode)
+        // Enable LISTEN/NOTIFY for application subscriptions.
         pubsub: true,
       }),
     ],
@@ -111,42 +103,11 @@ export function getPreset({
         // Allow EXPLAIN in development (you can replace this with a callback function if you want more control)
         allowExplain: isDev,
 
-        // Disable query logging - we're using morgan
-        // TODO: disableQueryLog: true,
-
         // Custom error handling
         handleErrors,
-        /*
-         * To use the built in PostGraphile error handling, you can use the
-         * following code instead of `handleErrors` above. Using `handleErrors`
-         * gives you much more control (and stability) over how errors are
-         * output to the user.
-         */
-        /*
-        // See https://www.graphile.org/postgraphile/debugging/
-        extendedErrors:
-          isDev || isTest
-            ? [
-                "errcode",
-                "severity",
-                "detail",
-                "hint",
-                "positon",
-                "internalPosition",
-                "internalQuery",
-                "where",
-                "schema",
-                "table",
-                "column",
-                "dataType",
-                "constraint",
-              ]
-            : ["errcode"],
-        showErrorStack: isDev || isTest,
-        */
 
-        // Automatically update GraphQL schema when database changes
-        watchPg: isDev,
+        // Schema changes are applied on restart.
+        watchPg: false,
 
         // Keep data/schema.graphql up to date
         sortExport: true,
@@ -154,16 +115,12 @@ export function getPreset({
           ? `data/schema.graphql`
           : undefined,
 
-        /*
-         * Plugins to enhance the GraphQL schema, see:
-         *   https://www.graphile.org/postgraphile/extending/
-         */
         appendPlugins: [
           // PostGraphile adds a `query: Query` field to `Query` for Relay 1
           // compatibility. We don't need that.
           RemoveQueryQueryPlugin,
 
-          // Adds support for our `postgraphile.tags.json5` file
+          // Apply the eagerly validated exposure rules.
           TagsFilePlugin,
 
           // Omits by default non-primary-key constraint mutations
@@ -179,32 +136,15 @@ export function getPreset({
           OrdersPlugin,
         ],
 
-        /*
-         * Plugins we don't want in our schema
-         */
         skipPlugins: [
           // Disable the 'Node' interface
           NodePlugin,
         ],
 
         graphileBuildOptions: {
-          /*
-           * Any properties here are merged into the settings passed to each Graphile
-           * Engine plugin - useful for configuring how the plugins operate.
-           */
-
           // Makes all SQL function arguments except those with defaults non-nullable
           pgStrictFunctions: true,
         },
-
-
-
-        // Pro plugin options (requires process.env.GRAPHILE_LICENSE)
-        // TODO: defaultPaginationCap: parseInt(process.env.GRAPHQL_PAGINATION_CAP || "", 10) || 50,
-        // TODO: graphqlDepthLimit: parseInt(process.env.GRAPHQL_DEPTH_LIMIT || "", 10) || 12,
-        // TODO: graphqlCostLimit: parseInt(process.env.GRAPHQL_COST_LIMIT || "", 10) || 30000,
-        // TODO: exposeGraphQLCost: (parseInt(process.env.HIDE_QUERY_COST || "", 10) || 0) < 1,
-        // readReplicaPgPool ...,
       }),
 
       // Simplifies the field names generated by PostGraphile.
@@ -213,38 +153,28 @@ export function getPreset({
     grafserv: {
       port: 3000,
       websockets: true,
-      // allowUnpersistedOperation: true,
-      watch: true,
+      watch: false,
       graphqlPath: "/api/graphql",
       eventStreamPath: "/api/graphql/stream",
     },
     grafast: {
-      explain: true,
-        /*
-         * These properties are merged into context (the third argument to GraphQL
-         * resolvers). This is useful if you write your own plugins that need
-         * access to, e.g., the logged in user.
-         */
+      explain: isDev,
       async context(ctx) {
-        // console.log("context", ctx);
         // @ts-expect-error ws in context
         const event = ctx.event ?? ctx.h3v1?.event ?? new H3Event(ctx.ws.request._req, new ServerResponse(ctx.ws.request)); // <=== ctx.ws is provided by makeWsHandler: open hook !
-        // console.log("event", event);
         if (!event) {
           throw new Error("No event");
         }
         const session = await getUserSession(event);
-        // console.log("session", session);
         const sessionId = uuidOrNull(session.secure?.session_id)
 
-          // console.log("sessionId", sessionId);
-            if (sessionId) {
-              // Update the last_active timestamp (but only do it at most once every 15 seconds to avoid too much churn).
-              await rootPgPool?.query(
-                "UPDATE app_private.sessions SET last_active = NOW() WHERE uuid = $1 AND last_active < NOW() - INTERVAL '15 seconds'",
-                [sessionId]
-              );
-            }
+        if (sessionId) {
+          // Refresh activity at most once every 15 seconds.
+          await rootPgPool.query(
+            "UPDATE app_private.sessions SET last_active = NOW() WHERE uuid = $1 AND last_active < NOW() - INTERVAL '15 seconds'",
+            [sessionId]
+          );
+        }
 
         return {
           sessionId: uuidOrNull(session.secure?.session_id),
@@ -256,30 +186,11 @@ export function getPreset({
           logout: () =>
             clearUserSession(event)
           ,
-          /*
-          * Postgres transaction settings for each GraphQL query/mutation to
-          * indicate to Postgres who is attempting to access the resources. These
-          * will be referenced by RLS policies/triggers/etc.
-          *
-          * Settings set here will be set using the equivalent of `SET LOCAL`, so
-          * certain things are not allowed. You can override Postgres settings such
-          * as 'role' and 'search_path' here; but for settings indicating the
-          * current user, session id, or other privileges to be used by RLS policies
-          * the setting names must contain at least one and at most two period
-          * symbols (`.`), and the first segment must not clash with any Postgres or
-          * extension settings. We find `jwt.claims.*` to be a safe namespace,
-          * whether or not you're using JWTs.
-          */
+          // Transaction-local settings consumed by PostgreSQL RLS policies.
           pgSettings: {
               // Everyone uses the "visitor" role currently
               role: process.env.DATABASE_VISITOR,
 
-              /*
-              * Note, though this says "jwt" it's not actually anything to do with
-              * JWTs, we just know it's a safe namespace to use, and it means you
-              * can use JWTs too, if you like, and they'll use the same settings
-              * names reducing the amount of code you need to write.
-              */
               "jwt.claims.session_id": sessionId ?? undefined,
 
           },
@@ -287,113 +198,7 @@ export function getPreset({
 
       },
     },
-    ruru: {endpoint: "/api/ruru"}
+    ruru: {endpoint: "/api/graphql"}
   };
   return preset;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// /** @satisfies {GraphileConfig.Preset} */
-// export const presetOrg = {
-//   extends: [
-//     PostGraphileAmberPreset,
-//     makeV4Preset({
-//       /* Enter your V4 options here */
-//       graphiql: true,
-//       graphiqlRoute: "/api/ruru",
-//       skipPlugins: [
-//         NodePlugin
-//       ],
-//     }),
-//     PostGraphileConnectionFilterPreset,
-//     PgManyToManyPreset,
-//     PgAggregatesPreset,
-//     PgSimplifyInflectionPreset
-//   ],
-//   plugins: [
-//     // PersistedPlugin,
-//     PgOmitArchivedPlugin,
-//     TagsFilePlugin
-//   ],
-
-//   pgServices: [
-//     makePgService({
-//       // Database connection string:
-//       connectionString: process.env.DATABASE_URL,
-//       superuserConnectionString:
-//         process.env.SUPERUSER_DATABASE_URL ?? process.env.DATABASE_URL,
-//       // List of schemas to expose:
-//       schemas: process.env.DATABASE_SCHEMAS?.split(",") ?? ["app_public"],
-//       // Enable LISTEN/NOTIFY:
-//       pubsub: true,
-//     }),
-//   ],
-//   grafserv: {
-//     port: 3000,
-//     websockets: true,
-//     allowUnpersistedOperation: true,
-//     watch: true,
-//     graphqlPath: "/api/graphql",
-//   },
-//   grafast: {
-//     explain: true,
-//   },
-//   ruru: {endpoint: "/api/ruru"}
-// };

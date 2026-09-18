@@ -59,9 +59,9 @@ const watchMode = cmdArgs.find(
   (arg) => arg === "--watch" || arg === "--watchAll"
 );
 const delayArg = cmdArgs.indexOf("--delay");
-let delaySeconds = null;
+
 if (delayArg > -1) {
-  delaySeconds = parseFloat(cmdArgs[delayArg + 1]);
+  const delaySeconds = parseFloat(cmdArgs[delayArg + 1]);
   if (isNaN(delaySeconds)) {
     throw new Error("Did not get a valid delay argument in seconds.");
   }

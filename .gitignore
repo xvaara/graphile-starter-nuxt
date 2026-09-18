@@ -30,5 +30,5 @@ logs
 
 # Generated files
 utils/graphql.ts
-utils/introspection.ts
+app/utils/introspection.ts
 

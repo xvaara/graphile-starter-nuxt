@@ -8,7 +8,7 @@ const toast = useToast()
 const route = useRoute()
 
 const state = reactive({
-  email: '',
+  username: '',
   password: ''
 })
 
@@ -16,7 +16,7 @@ const state = reactive({
 const returnTo = computed(() => {
   const to = route.query.returnTo?.toString()
   // Only allow internal URLs (starting with /)
-  return to?.startsWith('/') ? to : '/'
+  return to?.startsWith('/') && !to.startsWith('//') ? to : '/'
 })
 
 const { executeMutation: login, fetching: loading } = useLoginMutation()
@@ -28,12 +28,12 @@ const handleSubmit = async () => {
       password: state.password
     })
     // console.log('Login result:', result)
-    if (result.data.login?.user) {
+    if (result.data?.login?.user) {
       toast.add({
         title: 'Logged in successfully',
-        description: `Welcome back, ${result.data.login.user.name}!`,
+        description: `Welcome back, ${result.data?.login.user.name}!`,
         icon: 'i-heroicons-check-circle',
-        color: 'green'
+        color: 'success'
       })
       await useAuth(true)
       navigateTo(returnTo.value)
@@ -42,7 +42,7 @@ const handleSubmit = async () => {
         title: 'Login failed',
         description: result.error?.message || 'Invalid credentials',
         icon: 'i-heroicons-exclamation-circle',
-        color: 'red'
+        color: 'error'
       })
     }
   } catch (e) {
@@ -52,7 +52,7 @@ const handleSubmit = async () => {
       title: 'An error occurred',
       description: `Please try again later. Error code: ${code}`,
       icon: 'i-heroicons-exclamation-circle',
-      color: 'red'
+      color: 'error'
     })
   }
 }
@@ -69,13 +69,13 @@ const handleSubmit = async () => {
       </template>
 
       <UForm :state="state" class="space-y-4" @submit="handleSubmit">
-        <UFormField label="Email" name="email">
+        <UFormField label="Username" name="username">
           <UInput
             v-model="state.username"
             type="text"
             placeholder="username"
             icon="i-heroicons-envelope"
-            :ui="{ icon: { trailing: { pointer: '' } } }"
+
             autocomplete="username"
             required
           />
@@ -87,7 +87,7 @@ const handleSubmit = async () => {
             type="password"
             placeholder="••••••••"
             icon="i-heroicons-lock-closed"
-            :ui="{ icon: { trailing: { pointer: '' } } }"
+
             autocomplete="current-password"
             required
           />
@@ -98,7 +98,7 @@ const handleSubmit = async () => {
             variant="link"
             color="primary"
             size="xs"
-            to="#"
+            to="/forgot"
             class="!p-0"
           >
             Forgot password?
@@ -130,10 +130,5 @@ const handleSubmit = async () => {
       </template>
     </UCard>
 
-    <div class="mt-8 text-center text-gray-500 text-sm">
-      <p>Demo accounts:</p>
-      <p>Email: user@example.com | Password: password123</p>
-      <p>Email: admin@example.com | Password: admin123</p>
-    </div>
   </div>
 </template>

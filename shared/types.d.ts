@@ -8,7 +8,7 @@ declare global {
   namespace Grafast {
     interface Context {
       sessionId: string | null;
-      rootPgPool: InstanceType<typeof Pool> | undefined;
+      rootPgPool: InstanceType<typeof Pool>;
       login(userSession: UserSessionData): Promise<UserSessionData>;
       logout(): Promise<boolean>;
     }

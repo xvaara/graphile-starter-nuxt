@@ -1,6 +1,7 @@
 // from https://github.com/carvajalconsultants/headstart/blob/main/grafastExchange.ts
 
-import { execute, hookArgs } from "grafast";
+import { validateGraphQLDocument } from "../graphile/graphqlPolicy";
+import { execute, hookArgs } from "postgraphile/grafast";
 import {
   CombinedError,
   type Exchange,
@@ -9,7 +10,7 @@ import {
 } from "@urql/core";
 import { filter, fromPromise, mergeMap, pipe } from "wonka";
 
-import type { Maybe } from "grafast";
+import type { Maybe } from "postgraphile/grafast";
 import type { PostGraphileInstance } from "postgraphile";
 import type { H3Event } from "h3";
 
@@ -51,9 +52,20 @@ const runGrafastQuery = async (
   try {
     const { variables: variableValues, query: document } = operation;
 
+    const schema = await pgl.getSchema();
+    const errors = validateGraphQLDocument(schema, document);
+    if (errors.length) {
+      return {
+        operation,
+        error: new CombinedError({ graphQLErrors: [...errors] }),
+        stale: false,
+        hasNext: false,
+      };
+    }
+
     const args = {
       resolvedPreset: pgl.getResolvedPreset(),
-      schema: await pgl.getSchema(),
+      schema,
       document,
       requestContext, // Pass the provided requestContext here
       variableValues: variableValues as Maybe<{
@@ -70,13 +82,13 @@ const runGrafastQuery = async (
       throw new Error("Unexpected result format from execute");
     }
 
-    const { data, errors, extensions } = result;
+    const { data, errors: executionErrors, extensions } = result;
 
-    if (errors && errors.length > 0) {
+    if (executionErrors && executionErrors.length > 0) {
       return {
         operation,
         data,
-        error: new CombinedError({ graphQLErrors: [...errors] }),
+        error: new CombinedError({ graphQLErrors: [...executionErrors] }),
         extensions,
         stale: false,
         hasNext: false,

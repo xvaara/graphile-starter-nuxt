@@ -10,7 +10,6 @@ import * as url from 'url';
 import getTransport from "../transport";
 
 declare global {
-  // eslint-disable-next-line no-var
   var TEST_EMAILS: any[];
 }
 
@@ -82,7 +81,7 @@ export default task;
 
 const templatePromises: Record<
   string,
-  Promise<(variables: Record<string, any>) => string>
+  Promise<(variables: Record<string, any>) => Promise<string>>
 > = {};
 function loadTemplate(template: string) {
   if (isDev || !templatePromises[template]) {
@@ -97,13 +96,13 @@ function loadTemplate(template: string) {
       const templateFn = lodashTemplate(templateString, {
         escape: /\[\[([\s\S]+?)\]\]/g,
       });
-      return (variables: { [varName: string]: any }) => {
+      return async (variables: { [varName: string]: any }) => {
         const mjml = templateFn({
           projectName,
           legalText,
           ...variables,
         });
-        const { html, errors } = mjml2html(mjml);
+        const { html, errors } = await mjml2html(mjml);
         if (errors && errors.length) {
           console.error(errors);
         }

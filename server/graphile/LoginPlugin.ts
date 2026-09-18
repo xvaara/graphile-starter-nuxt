@@ -1,11 +1,10 @@
-import type { PgClassExpressionStep } from "@dataplan/pg";
-import { access } from "grafast";
-import type { Plans, Resolvers } from "graphile-utils";
-import { gql, makeExtendSchemaPlugin } from "graphile-utils";
+import { access } from "postgraphile/grafast";
+import type { Plans, Resolvers } from "postgraphile/utils";
+import { gql, extendSchema } from "postgraphile/utils";
 
 import { ERROR_MESSAGE_OVERRIDES } from "../utils/handleErrors";
 
-const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
+const PassportLoginPlugin = extendSchema((build) => {
   const typeDefs = gql`
     input RegisterInput {
       username: String!
@@ -103,11 +102,8 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
       },
     },
     LoginPayload: {
-      user() {
-        const $userId =
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          currentUserIdResource.execute() as PgClassExpressionStep<any, any>;
-        return userResource.get({ id: $userId });
+      user($obj) {
+        return userResource.get({ id: access($obj, "userId") });
       },
     },
   };
@@ -120,7 +116,7 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
           // Create a user and create a session for it in the proccess
           const {
             rows: [details],
-          } = await rootPgPool.query<{ user_id: number; session_id: string }>(
+          } = await rootPgPool.query<{ user_id: string; session_id: string }>(
             `
             with new_user as (
               select users.* from app_private.really_create_user(
@@ -151,8 +147,8 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
             // Update pgSettings so future queries will use the new session
             pgSettings!["jwt.claims.session_id"] = details.session_id;
 
-            // Tell Passport.js we're logged in
-            await login({ session_id: details.session_id });
+            // Store the secure application session
+            await login({ secure: { session_id: details.session_id } });
           }
 
           return {
@@ -199,14 +195,14 @@ const PassportLoginPlugin = makeExtendSchemaPlugin((build) => {
           }
 
           if (session.uuid) {
-            // Tell Passport.js we're logged in
+            // Store the secure application session
             await login({ secure: { session_id: session.uuid } });
           }
 
           // Update pgSettings so future queries will use the new session
           pgSettings!["jwt.claims.session_id"] = session.uuid;
 
-          return {};
+          return { userId: session.user_id };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
           const code = e.extensions?.code ?? e.code;

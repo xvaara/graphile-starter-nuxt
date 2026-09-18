@@ -13,9 +13,10 @@ const form = reactive({
 const { executeMutation: updateProfile, error } = useUpdateUserMutation()
 
 async function handleSubmit() {
+  if (!user.value) return
   try {
     await updateProfile({
-      id: user.value?.id,
+      id: user.value.id,
       patch: {
         name: form.name,
         username: form.username

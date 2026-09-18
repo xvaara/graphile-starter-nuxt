@@ -8,7 +8,7 @@ const state = reactive({
 })
 
 const { executeMutation: createOrganization, fetching: loading } = useCreateOrganizationMutation()
-const { executeQuery: lookupOrganizationBySlug, data: existingOrganizationData, fetching: slugLoading, error: slugError } = useOrganizationBySlugQuery({variables: { slug: () => state.slug }, pause: () => !state.slug })
+const { executeQuery: lookupOrganizationBySlug, data: existingOrganizationData, fetching: slugLoading, error: slugError } = useOrganizationBySlugQuery({variables: computed(() => ({ slug: state.slug })), pause: () => !state.slug })
 const slugCheckIsValid = ref(false)
 const organization = ref<{ id: string; name: string; slug: string } | null>(null)
 const formError = ref<unknown>(null)

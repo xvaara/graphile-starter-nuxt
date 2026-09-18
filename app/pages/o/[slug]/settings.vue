@@ -59,10 +59,10 @@ const inviteForm = ref({
 const inviteInProgress = ref(false)
 
 const { data: membersData, fetching: membersFetching, error: membersError } = useOrganizationMembersQuery({
-  variables: {
+  variables: computed(() => ({
     slug: slug.value,
-    offset: computed(() => (page.value - 1) * RESULTS_PER_PAGE)
-  }
+    offset: (page.value - 1) * RESULTS_PER_PAGE
+  }))
 })
 
 const { executeMutation: inviteToOrganization } = useInviteToOrganizationMutation()
@@ -127,6 +127,8 @@ const handleGeneralSubmit = async () => {
 
 // Members handlers
 const handleInvite = async () => {
+  const organizationId = orgData.value?.organizationBySlug?.id
+  if (!organizationId) return
   if (inviteInProgress.value || !inviteForm.value.inviteText) return
 
   inviteInProgress.value = true
@@ -135,7 +137,7 @@ const handleInvite = async () => {
 
   try {
     const result = await inviteToOrganization({
-      organizationId: orgData.value?.organizationBySlug?.id,
+      organizationId,
       email: isEmail ? inviteText : null,
       username: isEmail ? null : inviteText
     })
@@ -165,9 +167,11 @@ const handleInvite = async () => {
 }
 
 const handleRemoveMember = async (userId: string) => {
+  const organizationId = orgData.value?.organizationBySlug?.id
+  if (!organizationId) return
   try {
     await removeMember({
-      organizationId: orgData.value?.organizationBySlug?.id,
+      organizationId,
       userId
     })
     toast.add({
@@ -185,9 +189,11 @@ const handleRemoveMember = async (userId: string) => {
 }
 
 const handleTransferOwnership = async (userId: string) => {
+  const organizationId = orgData.value?.organizationBySlug?.id
+  if (!organizationId) return
   try {
     await transferOwnership({
-      organizationId: orgData.value?.organizationBySlug?.id,
+      organizationId,
       userId
     })
     toast.add({
@@ -205,9 +211,11 @@ const handleTransferOwnership = async (userId: string) => {
 }
 
 const handleTransferBillingContact = async (userId: string) => {
+  const organizationId = orgData.value?.organizationBySlug?.id
+  if (!organizationId) return
   try {
     await transferBillingContact({
-      organizationId: orgData.value?.organizationBySlug?.id,
+      organizationId,
       userId
     })
     toast.add({

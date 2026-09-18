@@ -1,10 +1,3 @@
-<script setup>
-const colorMode = useColorMode()
-const toggleDark = () => {
-  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
-}
-</script>
-
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
     <UContainer class="py-4">
@@ -18,13 +11,7 @@ const toggleDark = () => {
           <span class="font-bold text-lg">Postgraphile nuxt starter</span>
         </NuxtLink>
 
-        <UButton
-          color="gray"
-          variant="ghost"
-          :icon="colorMode.value === 'light' ? 'i-heroicons-moon' : 'i-heroicons-sun'"
-          aria-label="Toggle dark mode"
-          @click="toggleDark"
-        />
+        <UColorModeButton />
       </header>
 
       <main class="flex justify-center items-center min-h-[calc(100vh-160px)]">

@@ -1,5 +1,5 @@
 import { GraphQLError } from "graphql";
-import camelCase from "lodash-es/camelCase";
+import camelCase from "lodash-es/camelCase.js";
 
 const isDev = process.env.NODE_ENV === "development";
 const isTest = process.env.NODE_ENV === "test";
@@ -24,7 +24,9 @@ const ERROR_PROPERTIES_TO_EXPOSE =
     : ["code"];
 
 // This would be better as a macro...
-const pluck = (err: any): { [key: string]: any } => {
+type DatabaseError = Error & { code?: string; errcode?: string; table?: string; constraint?: string; [key: string]: unknown };
+
+const pluck = (err: DatabaseError): Record<string, unknown> => {
   return ERROR_PROPERTIES_TO_EXPOSE.reduce((memo, key) => {
     const value =
       key === "code"
@@ -35,7 +37,7 @@ const pluck = (err: any): { [key: string]: any } => {
       memo[key] = value;
     }
     return memo;
-  }, Object.create(null) as Record<string, any>);
+  }, Object.create(null) as Record<string, unknown>);
 };
 
 /**
@@ -66,7 +68,7 @@ export const ERROR_MESSAGE_OVERRIDES: { [code: string]: typeof pluck } = {
   }),
 };
 
-function conflictFieldsFromError(err: any) {
+function conflictFieldsFromError(err: DatabaseError) {
   const { table, constraint } = err;
   // TODO: extract a list of constraints from the DB
   if (constraint && table) {
@@ -90,11 +92,11 @@ function conflictFieldsFromError(err: any) {
 
 function maskError(error: GraphQLError): GraphQLError {
   const { message: rawMessage, originalError } = error;
-  const code = originalError ? (originalError as any)["code"] : null;
-  const localPluck = ERROR_MESSAGE_OVERRIDES[code] || pluck;
-  const exception = localPluck(originalError || error);
+  const code = originalError ? (originalError as DatabaseError)["code"] : null;
+  const localPluck = ERROR_MESSAGE_OVERRIDES[code ?? ""] || pluck;
+  const exception = localPluck((originalError || error) as DatabaseError);
   return new GraphQLError(
-    exception.message || rawMessage,
+    String(exception.message || rawMessage),
     error.nodes,
     error.source,
     error.positions,

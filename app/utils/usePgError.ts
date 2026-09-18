@@ -12,7 +12,7 @@ export function extractError(
   return (
     (error &&
       "graphQLErrors" in error &&
-      error.graphQLErrors &&
+      Array.isArray(error.graphQLErrors) &&
       error.graphQLErrors.length &&
       error.graphQLErrors[0]) ||
     error

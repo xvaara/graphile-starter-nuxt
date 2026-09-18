@@ -1,14 +1,17 @@
+import { copyFile, mkdir } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 const isDev = process.env.NODE_ENV !== 'production'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-01',
+  icon: { mode: 'svg', serverBundle: { collections: ['heroicons', 'lucide'] } },
+  ui: { fonts: false },
   devtools: { enabled: true },
   experimental: {
     asyncContext: true
-  },
-  future: {
-    compatibilityVersion: 4,
   },
   build: {
     transpile: ["@urql/vue"],
@@ -17,16 +20,21 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxt/icon',
     '@nuxt/image',
-    '@nuxt/test-utils',
     // https://github.com/atinux/nuxt-auth-utils
     'nuxt-auth-utils',
     // https://nuxt-security.vercel.app/getting-started/usage
     'nuxt-security',
     '@nuxt/ui',
-    // '@josephanson/nuxt-ai',
-    // 'nuxt-i18n-micro'
   ],
   nitro: {
+    hooks: {
+      async compiled(nitro) {
+        const destination = join(nitro.options.output.serverDir, 'tags.jsonc')
+        await mkdir(dirname(destination), { recursive: true })
+        // Never ship a server whose schema exposure rules were not packaged.
+        await copyFile(fileURLToPath(new URL('./db/tags.jsonc', import.meta.url)), destination)
+      },
+    },
     experimental: {
       websocket: true
     }
@@ -41,8 +49,6 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
-  },
-  ui: {
   },
   app: {
     pageTransition: { name: 'page', mode: 'out-in' },
@@ -59,31 +65,4 @@ export default defineNuxtConfig({
       },
     },
   },
-  i18n: {
-    locales: [
-      { code: 'en', iso: 'en-US', dir: 'ltr' },
-      { code: 'fi', iso: 'fi-FI', dir: 'ltr' },
-      { code: 'es', iso: 'es-ES', dir: 'ltr' },
-      { code: 'zh', iso: 'zh-CN', dir: 'ltr' },
-    ],
-    defaultLocale: 'en',
-    translationDir: 'locales',
-    meta: true,
-    autoDetectLanguage: true,
-    // strategy: 'no_prefix',
-  },
-  ai: {
-    dev: {
-      mcp: {
-        additionalDocs: {
-          'nuxt-18n-micro': {
-            url: 'github:s00d/nuxt-i18n-micro/tree/main/docs'
-          },
-        }
-
-      }
-    }
-
-  }
-
 })

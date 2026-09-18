@@ -41,9 +41,11 @@ async function handleUnlink() {
           <UButton color="error" @click="openModal(auth.id)">Unlink</UButton>
         </li>
       </ul>
-      <UModal v-model="modalOpen" title="Are you sure?" :closable="true">
+      <UModal v-model:open="modalOpen" title="Are you sure?" :close="true">
+          <template #body>
         <div>If you unlink this account you won’t be able to log in with it any more; please make sure your email is valid.</div>
-        <template #footer>
+        </template>
+          <template #footer>
           <UButton color="error" :loading="deleting" @click="handleUnlink">Unlink</UButton>
           <UButton color="neutral" @click="closeModal">Cancel</UButton>
         </template>

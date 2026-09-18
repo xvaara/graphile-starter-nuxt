@@ -7,7 +7,6 @@ const {
   withDotenvUpdater,
   updateDotenv,
   readDotenv,
-  runSync,
 } = require("./_setup_utils.cjs");
 
 runMain(async () => {
