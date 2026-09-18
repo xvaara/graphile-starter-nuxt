@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation } from '@urql/vue'
+import { useMutation } from 'villus'
 import { graphql } from '~/graphql'
 
 const VerifyEmailDocument = graphql(/* GraphQL */ `
@@ -26,7 +26,7 @@ const state = reactive({
   token: route.query.token as string || ''
 })
 
-const { executeMutation: verifyEmail, fetching: loading } = useMutation(VerifyEmailDocument)
+const { execute: verifyEmail, isFetching: loading } = useMutation(VerifyEmailDocument, { client: useNuxtApp().$villus, clearCacheTags: ['emails'] })
 const success = ref(false)
 
 const handleSubmit = async () => {

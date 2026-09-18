@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@urql/vue'
+import { useMutation, useQuery } from 'villus'
 import { getFragmentData, graphql } from '~/graphql'
 import { EmailsFormUserFragment, EmailsFormUserEmailFragment } from '~/operations/fragments'
 
@@ -72,14 +72,14 @@ const ResendEmailVerificationDocument = graphql(/* GraphQL */ `
 
 definePageMeta({ public: false })
 
-const { data, fetching: loading, error } = await useQuery({ query: SettingsEmailsDocument })
+const { data, isFetching: loading, error } = await useQuery({ fetchOnMount: false, client: useNuxtApp().$villus, query: SettingsEmailsDocument, tags: ['emails'] })
 const emailUser = computed(() => getFragmentData(EmailsFormUserFragment, data.value?.currentUser))
 const emails = computed(() => getFragmentData(EmailsFormUserEmailFragment, emailUser.value?.userEmails.nodes ?? []))
 const showAddEmailForm = ref(false)
 const newEmail = ref('')
 const addEmailError = ref('')
 
-const { executeMutation: addEmailMutation } = useMutation(AddEmailDocument)
+const { execute: addEmailMutation } = useMutation(AddEmailDocument, { client: useNuxtApp().$villus, refetchTags: ['emails'] })
 const addEmail = async () => {
   addEmailError.value = ''
   try {
@@ -90,15 +90,15 @@ const addEmail = async () => {
     addEmailError.value = e instanceof Error ? e.message : String(e)
   }
 }
-const { executeMutation: deleteEmailMutation } = useMutation(DeleteEmailDocument)
+const { execute: deleteEmailMutation } = useMutation(DeleteEmailDocument, { client: useNuxtApp().$villus, refetchTags: ['emails'] })
 const deleteEmail = async (id: string) => {
   await deleteEmailMutation({ emailId: id })
 }
-const { executeMutation: makePrimaryMutation } = useMutation(MakeEmailPrimaryDocument)
+const { execute: makePrimaryMutation } = useMutation(MakeEmailPrimaryDocument, { client: useNuxtApp().$villus, refetchTags: ['emails'] })
 const makePrimary = async (id: string) => {
   await makePrimaryMutation({ emailId: id })
 }
-const { executeMutation: resendVerificationMutation } = useMutation(ResendEmailVerificationDocument)
+const { execute: resendVerificationMutation } = useMutation(ResendEmailVerificationDocument, { client: useNuxtApp().$villus, refetchTags: ['emails'] })
 const resendVerification = async (id: string) => {
   await resendVerificationMutation({ emailId: id })
 }

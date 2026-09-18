@@ -8,7 +8,7 @@ export const OrganizationPageDocument = graphql(/* GraphQL */ `
   }
 `)
 
-export function getOrganizationPage(data: ResultOf<typeof OrganizationPageDocument> | undefined) {
+export function getOrganizationPage(data: ResultOf<typeof OrganizationPageDocument> | null | undefined) {
   const query = getFragmentData(OrganizationPageQueryFragment, data)
   return getFragmentData(OrganizationPageOrganizationFragment, query?.organizationBySlug)
 }

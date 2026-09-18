@@ -14,7 +14,7 @@ export default defineNuxtConfig({
     asyncContext: true
   },
   build: {
-    transpile: ["@urql/vue"],
+    transpile: ["villus"],
   },
   modules: [
     '@nuxt/eslint',

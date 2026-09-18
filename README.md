@@ -2,9 +2,9 @@
 
 For information about Nuxt look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
-Original [Graphile starter](https://github.com/graphile/starter) is build using Next.js and express. This is a fork to use Nuxt, Nuxt UI and URQL.
+Original [Graphile starter](https://github.com/graphile/starter) is build using Next.js and express. This is a fork to use Nuxt, Nuxt UI and Villus.
 
-`main` uses URQL with the GraphQL Codegen client preset, typed documents and fragment masking. The `urql` branch preserves the previous generated-composable integration; `apollo-client` and `apollo-client-preset` provide the Apollo alternatives. See [branch differences and development guidance](docs/branches.md).
+This branch uses **Villus 3.5.2 with the GraphQL Codegen client preset**, typed documents and fragment masking. It preserves direct SSR, cookie authentication, CSRF protection and WebSocket subscriptions. See [Villus integration details](docs/villus.md). `main` uses URQL with the same client preset. The `urql` branch preserves the previous generated-composable integration; `apollo-client` and `apollo-client-preset` provide the Apollo alternatives. See [branch differences and development guidance](docs/branches.md).
 
 ## NOT FOR BEGINNERS
 
@@ -19,7 +19,7 @@ you're comfortable with the various tools it uses
 [Graphile Worker](https://github.com/graphile/worker),
 [Graphile Migrate](https://github.com/graphile/migrate),
 [TypeScript](https://www.typescriptlang.org/docs/),
-[URQL](https://nearform.com/open-source/urql/),
+[Villus](https://villus.dev/guide/overview/),
 [GraphQL Code Generator](https://github.com/dotansimha/graphql-code-generator),
 [ESLint](https://eslint.org/), etc.)
 
@@ -40,7 +40,7 @@ aforementioned tutorial, but it's still an incredibly valuable resource.
 
 ## Status
 
-This starter uses PostGraphile 5, Nuxt 4, Nuxt UI 4 and URQL. Safe smoke and rendering tests cover the core integration; the legacy database-reset test harness remains unsupported. See [dependency upgrade and validation notes](docs/dependency-upgrade.md). Some application flows remain incomplete.
+This starter uses PostGraphile 5, Nuxt 4, Nuxt UI 4 and Villus. Safe smoke and rendering tests cover the core integration; the legacy database-reset test harness remains unsupported. See [dependency upgrade and validation notes](docs/dependency-upgrade.md). Some application flows remain incomplete.
 
 Use at your own risk. Probably not ready for production.
 

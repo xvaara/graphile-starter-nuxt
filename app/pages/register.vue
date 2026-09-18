@@ -1,5 +1,5 @@
 <script setup>
-import { useMutation } from '@urql/vue'
+import { useMutation } from 'villus'
 import { graphql } from '~/graphql'
 
 const RegisterDocument = graphql(/* GraphQL */ `
@@ -22,7 +22,7 @@ definePageMeta({
 
 // TODO: Add a loading state
 const loading = ref(false)
-const { executeMutation: register } = useMutation(RegisterDocument)
+const { execute: register } = useMutation(RegisterDocument, { client: useNuxtApp().$villus })
 
 const router = useRouter()
 const toast = useToast()

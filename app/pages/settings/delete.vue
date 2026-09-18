@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation } from '@urql/vue'
+import { useMutation } from 'villus'
 import { graphql } from '~/graphql'
 
 const RequestAccountDeletionDocument = graphql(/* GraphQL */ `
@@ -36,16 +36,16 @@ const deleted = ref(false)
 function openModal() { confirmOpen.value = true }
 function closeModal() { confirmOpen.value = false }
 
-const requestAccountDeletion = useMutation(RequestAccountDeletionDocument)
-const confirmAccountDeletion = useMutation(ConfirmAccountDeletionDocument)
+const requestAccountDeletion = useMutation(RequestAccountDeletionDocument, { client: useNuxtApp().$villus })
+const confirmAccountDeletion = useMutation(ConfirmAccountDeletionDocument, { client: useNuxtApp().$villus })
 
 async function doIt() {
   error.value = null
   doingIt.value = true
   try {
-    const { executeMutation } = requestAccountDeletion
+    const { execute } = requestAccountDeletion
 
-    const result = await executeMutation({})
+    const result = await execute({})
 
     if (!result?.data?.requestAccountDeletion?.success) throw new Error('Requesting deletion failed')
     itIsDone.value = true
@@ -62,8 +62,8 @@ async function confirmDeletion() {
   error.value = null
   deleting.value = true
   try {
-    const { executeMutation } = confirmAccountDeletion
-    const result = await executeMutation({ token: token.value })
+    const { execute } = confirmAccountDeletion
+    const result = await execute({ token: token.value })
 
     if (!result?.data?.confirmAccountDeletion?.success) throw new Error('Account deletion failed')
     deleted.value = true

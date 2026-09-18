@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@urql/vue'
+import { useMutation, useQuery } from 'villus'
 import { graphql } from '~/graphql'
 
 const CurrentUserAuthenticationsDocument = graphql(/* GraphQL */ `
@@ -34,7 +34,7 @@ const UnlinkUserAuthenticationDocument = graphql(/* GraphQL */ `
 
 definePageMeta({ public: false })
 
-const { data, fetching: loading, error } = await useQuery({ query: CurrentUserAuthenticationsDocument })
+const { data, isFetching: loading, error } = await useQuery({ fetchOnMount: false, client: useNuxtApp().$villus, query: CurrentUserAuthenticationsDocument, tags: ['accounts'] })
 const modalOpen = ref(false)
 const deleting = ref(false)
 const selectedId = ref<string | null>(null)
@@ -47,7 +47,7 @@ function closeModal() {
   modalOpen.value = false
   selectedId.value = null
 }
-const { executeMutation: unlinkUserAuthenticationMutation } = useMutation(UnlinkUserAuthenticationDocument)
+const { execute: unlinkUserAuthenticationMutation } = useMutation(UnlinkUserAuthenticationDocument, { client: useNuxtApp().$villus, refetchTags: ['accounts'] })
 async function handleUnlink() {
   if (!selectedId.value) return
   deleting.value = true

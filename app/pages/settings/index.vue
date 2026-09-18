@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation } from '@urql/vue'
+import { useMutation } from 'villus'
 import { graphql } from '~/graphql'
 
 const UpdateUserDocument = graphql(/* GraphQL */ `
@@ -26,7 +26,7 @@ const form = reactive({
   username: user.value?.username || ''
 })
 
-const { executeMutation: updateProfile, error } = useMutation(UpdateUserDocument)
+const { execute: updateProfile, error } = useMutation(UpdateUserDocument, { client: useNuxtApp().$villus })
 
 async function handleSubmit() {
   if (!user.value) return

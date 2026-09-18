@@ -1,11 +1,11 @@
-import { grafastExchange } from '../graphserv/grafastExchange'
+import { grafastPlugin } from '../graphserv/grafastPlugin'
 import { pgl } from '../graphserv/pgl'
 import { authPgPool, rootPgPool } from '../utils/pg'
 
 // Nitro owns the database runtime for both HTTP and direct SSR requests.
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('request', (event) => {
-    event.context.grafastExchange = grafastExchange(pgl, { h3v1: { event } })
+    event.context.grafastPlugin = grafastPlugin(pgl, { h3v1: { event } })
   })
   const services = pgl.getResolvedPreset().pgServices ?? []
   let closing: Promise<void> | undefined

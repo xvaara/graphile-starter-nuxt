@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@urql/vue'
+import { useMutation, useQuery } from 'villus'
 import { getFragmentData, graphql } from '~/graphql'
 import { OrganizationMembersOrganizationFragment, OrganizationMembersMembershipFragment, OrganizationPageOrganizationFragment } from '~/operations/fragments'
 import { getOrganizationPage, OrganizationPageDocument } from '~/operations/organization'
@@ -89,7 +89,7 @@ const slug = computed(() => route.params.slug as string)
 const currentTab = ref('general')
 
 // General settings state and mutations
-const { data: orgResult, fetching } = await useQuery({ query: OrganizationPageDocument,
+const { data: orgResult, isFetching: fetching, execute: refreshOrganization } = await useQuery({ fetchOnMount: false, client: useNuxtApp().$villus, query: OrganizationPageDocument, tags: ['organization'],
   variables: computed(() => ({ slug: slug.value }))
 })
 
@@ -115,8 +115,8 @@ watchEffect(() => {
   }
 })
 
-const { executeMutation: updateOrganization, fetching: updating } = useMutation(UpdateOrganizationDocument)
-const { executeMutation: deleteOrganization, fetching: deleting } = useMutation(DeleteOrganizationDocument)
+const { execute: updateOrganization, isFetching: updating } = useMutation(UpdateOrganizationDocument, { client: useNuxtApp().$villus, clearCacheTags: ['organization'] })
+const { execute: deleteOrganization, isFetching: deleting } = useMutation(DeleteOrganizationDocument, { client: useNuxtApp().$villus, clearCacheTags: ['organization'] })
 
 const generalState = reactive({
   name: '',
@@ -139,7 +139,7 @@ const inviteForm = ref({
 })
 const inviteInProgress = ref(false)
 
-const { data: membersData, fetching: membersFetching, error: membersError } = useQuery({ query: OrganizationMembersDocument,
+const { data: membersData, isFetching: membersFetching, error: membersError } = await useQuery({ fetchOnMount: false, client: useNuxtApp().$villus, query: OrganizationMembersDocument, tags: ['organization'],
   variables: computed(() => ({
     slug: slug.value,
     offset: (page.value - 1) * RESULTS_PER_PAGE
@@ -150,10 +150,10 @@ const memberOrganization = computed(() => getFragmentData(OrganizationMembersOrg
 const memberPermissions = computed(() => getFragmentData(OrganizationPageOrganizationFragment, memberOrganization.value))
 const members = computed(() => getFragmentData(OrganizationMembersMembershipFragment, memberOrganization.value?.organizationMemberships.nodes ?? []))
 
-const { executeMutation: inviteToOrganization } = useMutation(InviteToOrganizationDocument)
-const { executeMutation: removeMember } = useMutation(RemoveFromOrganizationDocument)
-const { executeMutation: transferOwnership } = useMutation(TransferOrganizationOwnershipDocument)
-const { executeMutation: transferBillingContact } = useMutation(TransferOrganizationBillingContactDocument)
+const { execute: inviteToOrganization } = useMutation(InviteToOrganizationDocument, { client: useNuxtApp().$villus, refetchTags: ['organization'] })
+const { execute: removeMember } = useMutation(RemoveFromOrganizationDocument, { client: useNuxtApp().$villus, refetchTags: ['organization'] })
+const { execute: transferOwnership } = useMutation(TransferOrganizationOwnershipDocument, { client: useNuxtApp().$villus, refetchTags: ['organization'] })
+const { execute: transferBillingContact } = useMutation(TransferOrganizationBillingContactDocument, { client: useNuxtApp().$villus, refetchTags: ['organization'] })
 
 // General settings handlers
 const handleGeneralSubmit = async () => {
@@ -186,6 +186,9 @@ const handleGeneralSubmit = async () => {
       }
     })
     if (result.data?.updateOrganization?.organization) {
+      const updated = result.data.updateOrganization.organization
+      if (updated.slug !== slug.value) await navigateTo(`/o/${updated.slug}/settings`)
+      else await refreshOrganization()
       toast.add({
         title: 'Organization updated',
         description: 'Organization updated successfully.',

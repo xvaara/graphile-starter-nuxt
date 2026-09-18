@@ -23,10 +23,6 @@ const config: CodegenConfig = {
         fragmentMasking: { unmaskFunctionName: 'getFragmentData' },
       },
     },
-    // Graphcache still needs schema metadata for normalized caching.
-    './app/utils/introspection.ts': {
-      plugins: ['urql-introspection'],
-    },
   },
 }
 

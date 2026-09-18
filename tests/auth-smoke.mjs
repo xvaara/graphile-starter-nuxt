@@ -10,6 +10,7 @@ const origin = process.env.SMOKE_ORIGIN || 'http://localhost:4313'
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const username = `smoke_${randomUUID().replaceAll('-', '').slice(0, 16)}`
 const email = `${username}@example.invalid`
+const additionalEmail = `${username}+secondary@example.invalid`
 const password = randomUUID()
 const organizationSlug = `preset-${randomUUID().replaceAll('-', '').slice(0, 12)}`
 const cookieJar = new Map()
@@ -42,6 +43,11 @@ try {
   const initialHtml = await page.text()
   csrf = initialHtml.match(/name="csrf-token" content="([^"]+)"/)?.[1]
   assert.ok(csrf, 'SSR supplies CSRF token')
+  const withoutCsrf = await fetch(`${origin}/api/graphql`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', cookie },
+    body: JSON.stringify({ query: '{currentUser{id}}' }),
+  })
+  assert.equal(withoutCsrf.status, 403, 'GraphQL HTTP rejects requests without CSRF tokens')
   assert.deepEqual((await graphql('{currentUser{id}}')).data, { currentUser: null })
   const registration = await graphql('mutation($username:String!,$email:String!,$password:String!){register(input:{username:$username,email:$email,password:$password}){user{id username}}}', { username, email, password })
   assert.equal(registration.errors, undefined, JSON.stringify(registration.errors))
@@ -51,8 +57,12 @@ try {
   assert.equal((await graphql('{currentUser{id username}}')).data.currentUser.id, userId)
   const html = await (await fetch(origin, { headers: { cookie } })).text()
   assert.ok(html.includes(username), 'authenticated SSR must contain fixture user')
-  assert.ok(html.includes('__URQL_DATA__'), 'SSR includes URQL hydration cache')
-  const anonymousHtml = await (await fetch(origin)).text()
+  assert.ok(html.includes('__VILLUS_DATA__'), 'SSR includes Villus hydration cache')
+  const [concurrentAuthenticated, anonymousHtml] = await Promise.all([
+    fetch(origin, { headers: { cookie } }).then(response => response.text()),
+    fetch(origin).then(response => response.text()),
+  ])
+  assert.ok(concurrentAuthenticated.includes(username), 'concurrent SSR retains its own session')
   assert.ok(!anonymousHtml.includes(username), 'a subsequent anonymous SSR request cannot inherit user state')
   assert.equal((await graphql('mutation{logout{success}}')).data.logout.success, true)
   assert.equal((await graphql('{currentUser{id}}')).data.currentUser, null)
@@ -102,6 +112,15 @@ try {
     await page.goto(`${origin}/settings/emails`, { waitUntil: 'networkidle' })
     await page.getByRole('heading', { name: 'Email addresses' }).waitFor()
     await page.locator('li').filter({ hasText: email }).waitFor()
+    await page.getByRole('button', { name: 'Add email', exact: true }).click()
+    await page.getByPlaceholder('New email').fill(additionalEmail)
+    await page.getByRole('button', { name: 'Add', exact: true }).click()
+    const secondaryRow = page.locator('li').filter({ hasText: additionalEmail })
+    await secondaryRow.waitFor()
+    const secondary = await pool.query('select id from app_public.user_emails where user_id=$1 and email=$2', [userId, additionalEmail])
+    emailIds.push(...secondary.rows.map(row => row.id))
+    await secondaryRow.getByRole('button', { name: 'Delete', exact: true }).click()
+    await secondaryRow.waitFor({ state: 'detached' })
     await page.goto(`${origin}/create-organization`, { waitUntil: 'networkidle' })
     await page.getByPlaceholder('Organization name', { exact: true }).fill(organizationSlug)
     await page.getByRole('button', { name: 'Create', exact: true }).click()
@@ -110,18 +129,44 @@ try {
     await page.getByRole('link', { name: 'Organization Settings', exact: true }).click()
     await page.getByRole('heading', { name: 'Organization Settings', exact: true }).waitFor()
     assert.equal(await page.getByPlaceholder('Organization name', { exact: true }).inputValue(), organizationSlug)
+    await page.getByPlaceholder('Organization name', { exact: true }).fill(`${organizationSlug} updated`)
+    await page.getByRole('button', { name: 'Save Changes', exact: true }).click()
+    await page.getByText('Organization updated successfully.', { exact: true }).waitFor()
     await page.getByRole('tab', { name: 'Members', exact: true }).click()
     await page.getByRole('heading', { name: 'Existing members', exact: true }).waitFor()
     await page.locator('li').filter({ hasText: username }).filter({ hasText: 'owner and billing contact' }).waitFor()
+    // Change only our fixture and notify its subscription. The rendered header must refresh
+    // through Villus's browser subscription, without a navigation or explicit client query.
+    await pool.query('update app_public.users set name=$1 where id=$2', ['Villus subscription fixture', userId])
+    const notifyBrowser = setInterval(() => {
+      void pool.query('select pg_notify($1, $2)', [`graphql:user:${userId}`, JSON.stringify({ event: 'smoke', subject: userId })])
+    }, 200)
+    try { await page.getByRole('button', { name: 'Villus subscription fixture', exact: true }).waitFor() }
+    finally { clearInterval(notifyBrowser) }
     await page.goto(origin, { waitUntil: 'networkidle' })
     await page.reload({ waitUntil: 'networkidle' })
-    await page.getByRole('button', { name: username, exact: true }).click()
+    await page.getByRole('button', { name: 'Villus subscription fixture', exact: true }).click()
+    await page.getByRole('menuitem', { name: 'Logout' }).click()
+    await page.getByRole('link', { name: 'Login', exact: true }).waitFor()
+    // Log back in without reloading Nuxt: the original app-level subscription must restart.
+    await page.getByRole('link', { name: 'Login', exact: true }).click()
+    await page.locator('input[autocomplete="username"]').fill(username)
+    await page.locator('input[autocomplete="current-password"]').fill(password)
+    await page.getByRole('button', { name: 'Sign In', exact: true }).click()
+    await page.waitForURL(origin + '/')
+    await pool.query('update app_public.users set name=$1 where id=$2', ['Villus reconnected fixture', userId])
+    const notifyReconnected = setInterval(() => {
+      void pool.query('select pg_notify($1, $2)', [`graphql:user:${userId}`, JSON.stringify({ event: 'smoke', subject: userId })])
+    }, 200)
+    try { await page.getByRole('button', { name: 'Villus reconnected fixture', exact: true }).waitFor() }
+    finally { clearInterval(notifyReconnected) }
+    await page.getByRole('button', { name: 'Villus reconnected fixture', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Logout' }).click()
     await page.getByRole('link', { name: 'Login', exact: true }).waitFor()
     assert.deepEqual(errors, [], 'authenticated browser flow has no JavaScript or hydration errors')
   } finally { await browser.close() }
   assert.equal((await graphql('mutation{logout{success}}')).data.logout.success, true)
-  console.log('PASS: auth/SSR isolation, WebSocket query/subscription, browser login/reload/logout, masked email fragments, organization creation and nested member fragments')
+  console.log('PASS: auth/SSR isolation, WebSocket query/subscription, browser login/reload/logout, email cache invalidation, organization mutations, nested fragments and browser subscription updates')
 }
 finally {
   // Scope cleanup to this run's unique fixture and its queued jobs, including jobs created by delete triggers.
@@ -135,7 +180,7 @@ finally {
     emailIds.push(...emails.rows.map(row => row.id))
     await pool.query('delete from app_public.users where id=any($1::uuid[])', [ids])
     const identifiers = [...ids, ...emailIds, ...organizationIds]
-    await pool.query("delete from graphile_worker._private_jobs where payload->>'user_id'=any($1::text[]) or payload->>'id'=any($1::text[]) or payload->>'organization_id'=any($1::text[]) or payload->>'email'=$2", [identifiers, email])
+    await pool.query("delete from graphile_worker._private_jobs where payload->>'user_id'=any($1::text[]) or payload->>'id'=any($1::text[]) or payload->>'organization_id'=any($1::text[]) or payload->>'email'=any($2::text[])", [identifiers, [email, additionalEmail]])
   }
   await pool.end()
 }

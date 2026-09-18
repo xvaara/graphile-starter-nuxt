@@ -24,7 +24,7 @@ async function requests() {
   assert.equal(response.status, 200, 'direct SSR accepts normal application operations')
   const cookie = response.headers.getSetCookie().map(value => value.split(';')[0]).join('; ')
   const html = await response.text()
-  assert.match(html, /__URQL_DATA__/)
+  assert.match(html, /__VILLUS_DATA__/)
   const csrf = html.match(/name="csrf-token" content="([^"]+)"/)?.[1]
   assert.ok(csrf)
   async function http(query) {

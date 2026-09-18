@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@urql/vue'
+import { useMutation, useQuery } from 'villus'
 import { graphql } from '~/graphql'
 
 const InvitationDetailDocument = graphql(/* GraphQL */ `
@@ -30,8 +30,8 @@ const state = reactive({
   code: route.query.code as string || ''
 })
 
-const { data, fetching, error } = useQuery({ query: InvitationDetailDocument, variables: { id: state.id, code: state.code }  })
-const { executeMutation: acceptInvite, fetching: accepting } = useMutation(AcceptOrganizationInviteDocument)
+const { data, isFetching: fetching, error } = await useQuery({ fetchOnMount: false, client: useNuxtApp().$villus, query: InvitationDetailDocument, variables: { id: state.id, code: state.code }  })
+const { execute: acceptInvite, isFetching: accepting } = useMutation(AcceptOrganizationInviteDocument, { client: useNuxtApp().$villus, clearCacheTags: ['organization'] })
 const accepted = ref(false)
 
 const handleAccept = async () => {

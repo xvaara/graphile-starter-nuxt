@@ -1,34 +1,34 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { createClient } from '@urql/core'
+import { createClient } from 'villus'
 import { buildSchema } from 'graphql'
-import { grafastExchange } from '../server/graphserv/grafastExchange'
+import { grafastPlugin } from '../server/graphserv/grafastPlugin'
 import type { PostGraphileInstance } from 'postgraphile'
 import type { H3Event } from 'h3'
 
-test('direct SSR exchange executes against each request schema', async () => {
+test('direct SSR plugin executes against each request schema', async () => {
   const makeClient = (name: string) => {
     const pgl = {
       getResolvedPreset: () => ({}),
       getSchema: async () => buildSchema(`type Query { ${name}: String }`),
     } as unknown as PostGraphileInstance
-    return createClient({ url: '/api/graphql', exchanges: [grafastExchange(pgl, { h3v1: { event: {} as H3Event } })] })
+    return createClient({ url: '/api/graphql', use: [grafastPlugin(pgl, { h3v1: { event: {} as H3Event } })] })
   }
-  const first = await makeClient('first').query('{ first }', {}).toPromise()
-  assert.equal(first.error, undefined)
+  const first = await makeClient('first').executeQuery({ query: '{ first }' })
+  assert.equal(first.error, null)
   assert.deepEqual({ ...first.data }, { first: null })
-  const second = await makeClient('second').query('{ second }', {}).toPromise()
-  assert.equal(second.error, undefined)
+  const second = await makeClient('second').executeQuery({ query: '{ second }' })
+  assert.equal(second.error, null)
   assert.deepEqual({ ...second.data }, { second: null })
 })
 
-test('direct SSR exchange reports schema failures instead of hanging', async () => {
+test('direct SSR plugin reports schema failures instead of hanging', async () => {
   const pgl = {
     getResolvedPreset: () => ({}),
     getSchema: async () => { throw new Error('Schema unavailable') },
   } as unknown as PostGraphileInstance
-  const client = createClient({ url: '/api/graphql', exchanges: [grafastExchange(pgl, { h3v1: { event: {} as H3Event } })] })
-  const result = await client.query('{ hello }', {}).toPromise()
+  const client = createClient({ url: '/api/graphql', use: [grafastPlugin(pgl, { h3v1: { event: {} as H3Event } })] })
+  const result = await client.executeQuery({ query: '{ hello }' })
   assert.equal(result.error?.networkError?.message, 'Schema unavailable')
 })
 
@@ -45,9 +45,9 @@ test('direct SSR applies production depth/introspection policy and GraphQL speci
   delete process.env.GRAPHQL_ALLOW_INTROSPECTION
   const schema = buildSchema('type Query { item: Item } type Item { child: Item value: String }')
   const pgl = { getResolvedPreset: () => ({}), getSchema: async () => schema } as unknown as PostGraphileInstance
-  const query = (document: string) => createClient({ url: '/api/graphql', exchanges: [grafastExchange(pgl, { h3v1: { event: {} as H3Event } })] }).query(document, {}).toPromise()
+  const query = (document: string) => createClient({ url: '/api/graphql', use: [grafastPlugin(pgl, { h3v1: { event: {} as H3Event } })] }).executeQuery({ query: document })
   const denied = await query('{ __schema { queryType { name } } }')
-  assert.match(denied.error!.graphQLErrors[0]!.message, /introspection/i)
+  assert.match(denied.error!.graphqlErrors[0]!.message, /introspection/i)
   assert.equal(denied.error?.networkError, undefined)
   assert.equal((await query('{ __typename }')).data.__typename, 'Query')
   let selection = 'value'
@@ -60,9 +60,9 @@ test('direct SSR applies production depth/introspection policy and GraphQL speci
   assert.match(cycle.error!.message, /within itself|cycle/i)
   assert.match((await query('{ missing }')).error!.message, /Cannot query field/)
   process.env.GRAPHQL_ALLOW_INTROSPECTION = 'true'
-  assert.equal((await query('{ __type(name:"Item") { name } }')).error, undefined)
+  assert.equal((await query('{ __type(name:"Item") { name } }')).error, null)
   process.env.NODE_ENV = 'development'
   delete process.env.GRAPHQL_ALLOW_INTROSPECTION
-  assert.equal((await query(fragment)).error, undefined)
-  assert.equal((await query('{ __schema { queryType { name } } }')).error, undefined)
+  assert.equal((await query(fragment)).error, null)
+  assert.equal((await query('{ __schema { queryType { name } } }')).error, null)
 })

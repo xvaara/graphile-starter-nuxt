@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation } from '@urql/vue'
+import { useMutation } from 'villus'
 import { graphql } from '~/graphql'
 
 const ForgotPasswordDocument = graphql(/* GraphQL */ `
@@ -14,7 +14,7 @@ definePageMeta({ layout: 'auth', public: true })
 
 const toast = useToast()
 const state = reactive({ email: '' })
-const { executeMutation: forgotPassword, fetching: loading } = useMutation(ForgotPasswordDocument)
+const { execute: forgotPassword, isFetching: loading } = useMutation(ForgotPasswordDocument, { client: useNuxtApp().$villus })
 const success = ref(false)
 
 const handleSubmit = async () => {

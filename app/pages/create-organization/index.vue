@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@urql/vue'
+import { useMutation, useQuery } from 'villus'
 import { getFragmentData, graphql } from '~/graphql'
 import { CreatedOrganizationFragment } from '~/operations/fragments'
 
@@ -38,8 +38,8 @@ const state = reactive({
   slug: '',
 })
 
-const { executeMutation: createOrganization, fetching: loading } = useMutation(CreateOrganizationDocument)
-const { executeQuery: lookupOrganizationBySlug, data: existingOrganizationData, fetching: slugLoading, error: slugError } = useQuery({ query: OrganizationBySlugDocument,variables: computed(() => ({ slug: state.slug })), pause: () => !state.slug })
+const { execute: createOrganization, isFetching: loading } = useMutation(CreateOrganizationDocument, { client: useNuxtApp().$villus, clearCacheTags: ['organization'] })
+const { execute: lookupOrganizationBySlug, data: existingOrganizationData, isFetching: slugLoading, error: slugError } = useQuery({ client: useNuxtApp().$villus, query: OrganizationBySlugDocument, tags: ['organization'], variables: computed(() => ({ slug: state.slug })), paused: () => !state.slug })
 const slugCheckIsValid = ref(false)
 const organization = ref<{ id: string; name: string; slug: string } | null>(null)
 const formError = ref<unknown>(null)
@@ -114,7 +114,7 @@ const handleSubmit = async () => {
             Organization name is already in use
           </div>
           <div v-else-if="slugError" class="text-xs text-yellow-500 mt-1">
-            Error checking for existing organization (error code: ERR_{{ slugError?.graphQLErrors?.[0]?.extensions?.code }})
+            Error checking for existing organization (error code: ERR_{{ slugError?.graphqlErrors?.[0]?.extensions?.code }})
           </div>
         </div>
         <UAlert v-if="formError" color="error" class="mt-2">

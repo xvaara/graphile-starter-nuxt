@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation, useQuery } from '@urql/vue'
+import { useMutation, useQuery } from 'villus'
 import { graphql } from '~/graphql'
 
 const SettingsPasswordDocument = graphql(/* GraphQL */ `
@@ -27,14 +27,14 @@ const ChangePasswordDocument = graphql(/* GraphQL */ `
 
 definePageMeta({ public: false })
 
-const { fetching: loading, error } = await useQuery({ query: SettingsPasswordDocument })
+const { isFetching: loading, error } = await useQuery({ fetchOnMount: false, client: useNuxtApp().$villus, query: SettingsPasswordDocument })
 const oldPassword = ref('')
 const newPassword = ref('')
 const changeError = ref('')
 const changeSuccess = ref(false)
 const changing = ref(false)
 
-const { executeMutation: changePasswordMutation } = useMutation(ChangePasswordDocument)
+const { execute: changePasswordMutation } = useMutation(ChangePasswordDocument, { client: useNuxtApp().$villus })
 const changePassword = async () => {
   changeError.value = ''
   changeSuccess.value = false

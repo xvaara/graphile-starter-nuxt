@@ -11,10 +11,10 @@ export function extractError(
 ): null | Error | GraphQLError {
   return (
     (error &&
-      "graphQLErrors" in error &&
-      Array.isArray(error.graphQLErrors) &&
-      error.graphQLErrors.length &&
-      error.graphQLErrors[0]) ||
+      "graphqlErrors" in error &&
+      Array.isArray(error.graphqlErrors) &&
+      error.graphqlErrors.length &&
+      error.graphqlErrors[0]) ||
     error
   );
 }

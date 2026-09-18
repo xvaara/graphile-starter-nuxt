@@ -1,6 +1,6 @@
 import type { ResultOf } from '@graphql-typed-document-node/core'
 import { SharedLayoutQueryFragment, SharedLayoutUserFragment } from '~/operations/fragments'
-import { useSubscription } from '@urql/vue'
+import { useSubscription } from 'villus'
 import { getFragmentData, graphql } from '~/graphql'
 
 const CurrentUserUpdatedDocument = graphql(/* GraphQL */ `
@@ -33,7 +33,7 @@ const LogoutDocument = graphql(/* GraphQL */ `
   }
 `)
 
-function getSharedUser(data: ResultOf<typeof SharedDocument> | undefined) {
+function getSharedUser(data: ResultOf<typeof SharedDocument> | null | undefined) {
   const query = getFragmentData(SharedLayoutQueryFragment, data)
   return getFragmentData(SharedLayoutUserFragment, query?.currentUser) ?? null
 }
@@ -43,12 +43,10 @@ export async function useAuth(refresh = false) {
   const user = useState<ResultOf<typeof SharedLayoutUserFragment> | null>('auth:user', () => null)
   const initialized = useState('auth:initialized', () => false)
   if (refresh && import.meta.client) nuxtApp.$refreshClient()
-  const client = unref(nuxtApp.$urql)
+  const client = nuxtApp.$villus
 
   if (!initialized.value || refresh) {
-    const result = await client.query(SharedDocument, {}, {
-      requestPolicy: refresh ? 'network-only' : 'cache-first',
-    }).toPromise()
+    const result = await client.executeQuery({ query: SharedDocument, cachePolicy: refresh ? 'network-only' : 'cache-first' })
     if (result.error) throw result.error
     user.value = getSharedUser(result.data)
     initialized.value = true
@@ -56,16 +54,20 @@ export async function useAuth(refresh = false) {
 
   function subscribe() {
     if (import.meta.server) return
-    const subscription = useSubscription({ query: CurrentUserUpdatedDocument, pause: computed(() => !user.value) })
+    const subscription = useSubscription({ client: nuxtApp.$villus, query: CurrentUserUpdatedDocument, skip: computed(() => !user.value) })
+    watch(nuxtApp.$villusSessionVersion, () => {
+      if (user.value) subscription.subscribe()
+    })
     watch(subscription.data, async (data) => {
       if (!data?.currentUserUpdated) return
-      const result = await unref(nuxtApp.$urql).query(SharedDocument, {}, { requestPolicy: 'network-only' }).toPromise()
-      if (!result.error) user.value = getSharedUser(result.data)
+      const currentUserId = user.value?.id
+      const result = await nuxtApp.$villus.executeQuery({ query: SharedDocument, cachePolicy: 'network-only' })
+      if (!result.error && currentUserId && user.value?.id === currentUserId) user.value = getSharedUser(result.data)
     })
   }
 
   async function logout() {
-    const result = await unref(nuxtApp.$urql).mutation(LogoutDocument, {}).toPromise()
+    const result = await nuxtApp.$villus.executeMutation({ query: LogoutDocument })
     if (result.error) throw result.error
     user.value = null
     initialized.value = false

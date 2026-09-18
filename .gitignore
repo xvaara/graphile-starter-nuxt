@@ -25,6 +25,9 @@ logs
 
 .ethereal
 
+# Local fixture prototype writer lock
+db/migrations/.fixture-migrate.lock/
+
 .pnp.*
 .yarn/*
 

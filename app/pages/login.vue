@@ -1,5 +1,5 @@
 <script setup>
-import { useMutation } from '@urql/vue'
+import { useMutation } from 'villus'
 import { graphql } from '~/graphql'
 
 const LoginDocument = graphql(/* GraphQL */ `
@@ -34,7 +34,7 @@ const returnTo = computed(() => {
   return to?.startsWith('/') && !to.startsWith('//') ? to : '/'
 })
 
-const { executeMutation: login, fetching: loading } = useMutation(LoginDocument)
+const { execute: login, isFetching: loading } = useMutation(LoginDocument, { client: useNuxtApp().$villus })
 
 const handleSubmit = async () => {
   try {

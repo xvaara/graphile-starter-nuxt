@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMutation } from '@urql/vue'
+import { useMutation } from 'villus'
 import { graphql } from '~/graphql'
 
 const ResetPasswordDocument = graphql(/* GraphQL */ `
@@ -25,7 +25,7 @@ const state = reactive({
   confirm: ''
 })
 
-const { executeMutation: resetPassword, fetching: loading } = useMutation(ResetPasswordDocument)
+const { execute: resetPassword, isFetching: loading } = useMutation(ResetPasswordDocument, { client: useNuxtApp().$villus })
 const success = ref(false)
 
 const passwordsMatch = computed(() => state.password && state.password === state.confirm)

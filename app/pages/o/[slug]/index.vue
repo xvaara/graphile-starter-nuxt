@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useQuery } from '@urql/vue'
+import { useQuery } from 'villus'
 import { getOrganizationPage, OrganizationPageDocument } from '~/operations/organization'
 
 
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
-const { data, fetching, error } = useQuery({ query: OrganizationPageDocument, variables: computed(() => ({ slug: slug.value })) })
+const { data, isFetching: fetching, error } = await useQuery({ fetchOnMount: false, client: useNuxtApp().$villus, query: OrganizationPageDocument, tags: ['organization'], variables: computed(() => ({ slug: slug.value })) })
 
 const organization = computed(() => getOrganizationPage(data.value))
 
