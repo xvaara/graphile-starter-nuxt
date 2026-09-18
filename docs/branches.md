@@ -5,11 +5,14 @@ The branches share the PostGraphile backend and schema, but demonstrate differen
 | Branch | GraphQL client | Code generation and operation sources |
 | --- | --- | --- |
 | [`main`](https://github.com/xvaara/graphile-starter-nuxt/tree/main) | URQL | Codegen client preset; typed documents in Vue/TypeScript, native URQL hooks, fragment masking |
+| [`codex/villus-client-preset`](https://github.com/xvaara/graphile-starter-nuxt/tree/codex/villus-client-preset) | Villus | Codegen client preset; native Villus hooks, fragment masking, tagged query caching ([integration notes](villus.md)) |
 | [`urql`](https://github.com/xvaara/graphile-starter-nuxt/tree/urql) | URQL | The previous integration: external `graphql/*.graphql` documents and generated `use…Query` / `use…Mutation` composables |
 | [`apollo-client`](https://github.com/xvaara/graphile-starter-nuxt/tree/apollo-client) | Apollo Client 4 / Vue Apollo 5 alpha | External GraphQL documents and generated Apollo composables |
 | [`apollo-client-preset`](https://github.com/xvaara/graphile-starter-nuxt/tree/apollo-client-preset) | Apollo Client 4 / Vue Apollo 5 alpha | Codegen client preset; inline typed documents and fragment masking |
 
 `main` continues to use URQL, Graphcache, direct in-process SSR, request-isolated state, cookie authentication, CSRF-protected HTTP requests and WebSocket subscriptions. Choosing the client preset changes how application operations are authored and typed; it does not change the server schema or switch the client to Apollo. The 33 existing operations and their fragment selections are preserved.
+
+The Villus branch starts from `main` at `46da970`. It has its own request-scoped SSR plugin and query-cache invalidation; the sections below describe the URQL implementation on `main`.
 
 ## Authoring operations on main
 
