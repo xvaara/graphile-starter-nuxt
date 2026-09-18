@@ -1,4 +1,19 @@
 <script setup>
+import { useMutation } from '@urql/vue'
+import { graphql } from '~/graphql'
+
+const LoginDocument = graphql(/* GraphQL */ `
+  mutation Login($username: String!, $password: String!) {
+    login(input: {username: $username, password: $password}) {
+      user {
+        id
+        username
+        name
+      }
+    }
+  }
+`)
+
 definePageMeta({
   layout: 'auth',
   public: true,
@@ -19,7 +34,7 @@ const returnTo = computed(() => {
   return to?.startsWith('/') && !to.startsWith('//') ? to : '/'
 })
 
-const { executeMutation: login, fetching: loading } = useLoginMutation()
+const { executeMutation: login, fetching: loading } = useMutation(LoginDocument)
 
 const handleSubmit = async () => {
   try {

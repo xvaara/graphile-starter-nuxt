@@ -1,7 +1,40 @@
 <script setup lang="ts">
+import { useMutation, useQuery } from '@urql/vue'
+import { graphql } from '~/graphql'
+
+const CurrentUserAuthenticationsDocument = graphql(/* GraphQL */ `
+  query CurrentUserAuthentications {
+    currentUser {
+      id
+      authentications: userAuthenticationsList(first: 50) {
+        id
+        service
+        identifier
+        createdAt
+      }
+    }
+  }
+`)
+
+const UnlinkUserAuthenticationDocument = graphql(/* GraphQL */ `
+  mutation UnlinkUserAuthentication($id: UUID!) {
+    deleteUserAuthentication(input: {id: $id}) {
+      user {
+        id
+        userAuthenticationsList(first: 50) {
+          id
+          identifier
+          service
+          createdAt
+        }
+      }
+    }
+  }
+`)
+
 definePageMeta({ public: false })
 
-const { data, fetching: loading, error } = await useCurrentUserAuthenticationsQuery()
+const { data, fetching: loading, error } = await useQuery({ query: CurrentUserAuthenticationsDocument })
 const modalOpen = ref(false)
 const deleting = ref(false)
 const selectedId = ref<string | null>(null)
@@ -14,7 +47,7 @@ function closeModal() {
   modalOpen.value = false
   selectedId.value = null
 }
-const { executeMutation: unlinkUserAuthenticationMutation } = useUnlinkUserAuthenticationMutation()
+const { executeMutation: unlinkUserAuthenticationMutation } = useMutation(UnlinkUserAuthenticationDocument)
 async function handleUnlink() {
   if (!selectedId.value) return
   deleting.value = true

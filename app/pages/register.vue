@@ -1,11 +1,28 @@
 <script setup>
+import { useMutation } from '@urql/vue'
+import { graphql } from '~/graphql'
+
+const RegisterDocument = graphql(/* GraphQL */ `
+  mutation Register($username: String!, $password: String!, $email: String!, $name: String) {
+    register(
+      input: {username: $username, password: $password, email: $email, name: $name}
+    ) {
+      user {
+        id
+        username
+        name
+      }
+    }
+  }
+`)
+
 definePageMeta({
   layout: 'auth',
 })
 
 // TODO: Add a loading state
 const loading = ref(false)
-const { executeMutation: register } = useRegisterMutation()
+const { executeMutation: register } = useMutation(RegisterDocument)
 
 const router = useRouter()
 const toast = useToast()

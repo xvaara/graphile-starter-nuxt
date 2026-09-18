@@ -1,4 +1,26 @@
 <script setup lang="ts">
+import { useMutation, useQuery } from '@urql/vue'
+import { graphql } from '~/graphql'
+
+const InvitationDetailDocument = graphql(/* GraphQL */ `
+  query InvitationDetail($id: UUID!, $code: String) {
+    ...SharedLayout_Query
+    organizationForInvitation(invitationId: $id, code: $code) {
+      id
+      name
+      slug
+    }
+  }
+`)
+
+const AcceptOrganizationInviteDocument = graphql(/* GraphQL */ `
+  mutation AcceptOrganizationInvite($id: UUID!, $code: String) {
+    acceptInvitationToOrganization(input: {invitationId: $id, code: $code}) {
+      clientMutationId
+    }
+  }
+`)
+
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -8,8 +30,8 @@ const state = reactive({
   code: route.query.code as string || ''
 })
 
-const { data, fetching, error } = useInvitationDetailQuery({ variables: { id: state.id, code: state.code }  })
-const { executeMutation: acceptInvite, fetching: accepting } = useAcceptOrganizationInviteMutation()
+const { data, fetching, error } = useQuery({ query: InvitationDetailDocument, variables: { id: state.id, code: state.code }  })
+const { executeMutation: acceptInvite, fetching: accepting } = useMutation(AcceptOrganizationInviteDocument)
 const accepted = ref(false)
 
 const handleAccept = async () => {

@@ -1,5 +1,7 @@
 # Branch consistency review
 
+This records the shared dependency-upgrade review. For the current branch layout and the subsequent `main` client-preset migration, see [GraphQL client branches](branches.md). The earlier URQL implementation is preserved on `urql`; preset CSRF has since been enabled.
+
 Reviewed on 2026-09-18 across `codex/upgrade-main`, `codex/upgrade-apollo-client`, and `codex/upgrade-apollo-client-preset`, including comparison with their original source branches.
 
 ## Shared behavior

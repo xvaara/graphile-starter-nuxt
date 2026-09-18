@@ -1,14 +1,40 @@
 <script setup lang="ts">
+import { useMutation, useQuery } from '@urql/vue'
+import { graphql } from '~/graphql'
+
+const SettingsPasswordDocument = graphql(/* GraphQL */ `
+  query SettingsPassword {
+    currentUser {
+      id
+      hasPassword
+      userEmails(first: 1, condition: {isPrimary: true}) {
+        nodes {
+          id
+          email
+        }
+      }
+    }
+  }
+`)
+
+const ChangePasswordDocument = graphql(/* GraphQL */ `
+  mutation ChangePassword($oldPassword: String!, $newPassword: String!) {
+    changePassword(input: {oldPassword: $oldPassword, newPassword: $newPassword}) {
+      success
+    }
+  }
+`)
+
 definePageMeta({ public: false })
 
-const { fetching: loading, error } = await useSettingsPasswordQuery()
+const { fetching: loading, error } = await useQuery({ query: SettingsPasswordDocument })
 const oldPassword = ref('')
 const newPassword = ref('')
 const changeError = ref('')
 const changeSuccess = ref(false)
 const changing = ref(false)
 
-const { executeMutation: changePasswordMutation } = useChangePasswordMutation()
+const { executeMutation: changePasswordMutation } = useMutation(ChangePasswordDocument)
 const changePassword = async () => {
   changeError.value = ''
   changeSuccess.value = false

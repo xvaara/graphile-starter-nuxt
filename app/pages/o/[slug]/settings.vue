@@ -1,4 +1,85 @@
 <script setup lang="ts">
+import { useMutation, useQuery } from '@urql/vue'
+import { getFragmentData, graphql } from '~/graphql'
+import { OrganizationMembersOrganizationFragment, OrganizationMembersMembershipFragment, OrganizationPageOrganizationFragment } from '~/operations/fragments'
+import { getOrganizationPage, OrganizationPageDocument } from '~/operations/organization'
+
+const UpdateOrganizationDocument = graphql(/* GraphQL */ `
+  mutation UpdateOrganization($input: UpdateOrganizationInput!) {
+    updateOrganization(input: $input) {
+      organization {
+        id
+        slug
+        name
+      }
+    }
+  }
+`)
+
+const DeleteOrganizationDocument = graphql(/* GraphQL */ `
+  mutation DeleteOrganization($organizationId: UUID!) {
+    deleteOrganization(input: {organizationId: $organizationId}) {
+      clientMutationId
+    }
+  }
+`)
+
+const OrganizationMembersDocument = graphql(/* GraphQL */ `
+  query OrganizationMembers($slug: String!, $offset: Int = 0) {
+    ...OrganizationPage_Query
+    organizationBySlug(slug: $slug) {
+      id
+      ...OrganizationMembers_Organization
+    }
+  }
+`)
+
+const InviteToOrganizationDocument = graphql(/* GraphQL */ `
+  mutation InviteToOrganization($organizationId: UUID!, $email: String, $username: String) {
+    inviteToOrganization(
+      input: {organizationId: $organizationId, email: $email, username: $username}
+    ) {
+      clientMutationId
+    }
+  }
+`)
+
+const RemoveFromOrganizationDocument = graphql(/* GraphQL */ `
+  mutation RemoveFromOrganization($organizationId: UUID!, $userId: UUID!) {
+    removeFromOrganization(
+      input: {organizationId: $organizationId, userId: $userId}
+    ) {
+      clientMutationId
+    }
+  }
+`)
+
+const TransferOrganizationOwnershipDocument = graphql(/* GraphQL */ `
+  mutation TransferOrganizationOwnership($organizationId: UUID!, $userId: UUID!) {
+    transferOrganizationOwnership(
+      input: {organizationId: $organizationId, userId: $userId}
+    ) {
+      organization {
+        id
+        currentUserIsOwner
+      }
+    }
+  }
+`)
+
+const TransferOrganizationBillingContactDocument = graphql(/* GraphQL */ `
+  mutation TransferOrganizationBillingContact($organizationId: UUID!, $userId: UUID!) {
+    transferOrganizationBillingContact(
+      input: {organizationId: $organizationId, userId: $userId}
+    ) {
+      organization {
+        id
+        currentUserIsBillingContact
+      }
+    }
+  }
+`)
+
 
 const route = useRoute()
 const toast = useToast()
@@ -8,15 +89,15 @@ const slug = computed(() => route.params.slug as string)
 const currentTab = ref('general')
 
 // General settings state and mutations
-const { data: orgData, fetching } = await useOrganizationPageQuery({
-  variables: {
-    slug: slug.value
-  }
+const { data: orgResult, fetching } = await useQuery({ query: OrganizationPageDocument,
+  variables: computed(() => ({ slug: slug.value }))
 })
+
+const orgData = computed(() => getOrganizationPage(orgResult.value))
 
 // Throw 404 error if organization not found, but only after the query completes
 watchEffect(() => {
-  if (!fetching.value && orgData.value && !orgData.value.organizationBySlug) {
+  if (!fetching.value && orgResult.value && !orgData.value) {
     throw createError({
       statusCode: 404,
       statusMessage: 'Organization Not Found',
@@ -24,7 +105,7 @@ watchEffect(() => {
       fatal: true
     })
   }
-  if (!fetching.value && !orgData.value?.organizationBySlug?.currentUserIsOwner) {
+  if (!fetching.value && !orgData.value?.currentUserIsOwner) {
     throw createError({
       statusCode: 403,
       statusMessage: 'Forbidden',
@@ -34,8 +115,8 @@ watchEffect(() => {
   }
 })
 
-const { executeMutation: updateOrganization, fetching: updating } = useUpdateOrganizationMutation()
-const { executeMutation: deleteOrganization, fetching: deleting } = useDeleteOrganizationMutation()
+const { executeMutation: updateOrganization, fetching: updating } = useMutation(UpdateOrganizationDocument)
+const { executeMutation: deleteOrganization, fetching: deleting } = useMutation(DeleteOrganizationDocument)
 
 const generalState = reactive({
   name: '',
@@ -43,9 +124,9 @@ const generalState = reactive({
 })
 
 watchEffect(() => {
-  if (orgData.value?.organizationBySlug) {
-    generalState.name = orgData.value.organizationBySlug.name
-    generalState.slug = orgData.value.organizationBySlug.slug
+  if (orgData.value) {
+    generalState.name = orgData.value.name
+    generalState.slug = orgData.value.slug
   }
 })
 
@@ -58,22 +139,26 @@ const inviteForm = ref({
 })
 const inviteInProgress = ref(false)
 
-const { data: membersData, fetching: membersFetching, error: membersError } = useOrganizationMembersQuery({
+const { data: membersData, fetching: membersFetching, error: membersError } = useQuery({ query: OrganizationMembersDocument,
   variables: computed(() => ({
     slug: slug.value,
     offset: (page.value - 1) * RESULTS_PER_PAGE
   }))
 })
 
-const { executeMutation: inviteToOrganization } = useInviteToOrganizationMutation()
-const { executeMutation: removeMember } = useRemoveFromOrganizationMutation()
-const { executeMutation: transferOwnership } = useTransferOrganizationOwnershipMutation()
-const { executeMutation: transferBillingContact } = useTransferOrganizationBillingContactMutation()
+const memberOrganization = computed(() => getFragmentData(OrganizationMembersOrganizationFragment, membersData.value?.organizationBySlug))
+const memberPermissions = computed(() => getFragmentData(OrganizationPageOrganizationFragment, memberOrganization.value))
+const members = computed(() => getFragmentData(OrganizationMembersMembershipFragment, memberOrganization.value?.organizationMemberships.nodes ?? []))
+
+const { executeMutation: inviteToOrganization } = useMutation(InviteToOrganizationDocument)
+const { executeMutation: removeMember } = useMutation(RemoveFromOrganizationDocument)
+const { executeMutation: transferOwnership } = useMutation(TransferOrganizationOwnershipDocument)
+const { executeMutation: transferBillingContact } = useMutation(TransferOrganizationBillingContactDocument)
 
 // General settings handlers
 const handleGeneralSubmit = async () => {
   try {
-    if (!orgData.value?.organizationBySlug) {
+    if (!orgData.value) {
       toast.add({
         title: 'Organization not found',
         description: 'Please check the organization slug.',
@@ -93,7 +178,7 @@ const handleGeneralSubmit = async () => {
     }
     const result = await updateOrganization({
       input: {
-        id: orgData.value.organizationBySlug.id,
+        id: orgData.value.id,
         patch: {
           name: generalState.name,
           slug: generalState.slug
@@ -127,7 +212,7 @@ const handleGeneralSubmit = async () => {
 
 // Members handlers
 const handleInvite = async () => {
-  const organizationId = orgData.value?.organizationBySlug?.id
+  const organizationId = orgData.value?.id
   if (!organizationId) return
   if (inviteInProgress.value || !inviteForm.value.inviteText) return
 
@@ -167,7 +252,7 @@ const handleInvite = async () => {
 }
 
 const handleRemoveMember = async (userId: string) => {
-  const organizationId = orgData.value?.organizationBySlug?.id
+  const organizationId = orgData.value?.id
   if (!organizationId) return
   try {
     await removeMember({
@@ -189,7 +274,7 @@ const handleRemoveMember = async (userId: string) => {
 }
 
 const handleTransferOwnership = async (userId: string) => {
-  const organizationId = orgData.value?.organizationBySlug?.id
+  const organizationId = orgData.value?.id
   if (!organizationId) return
   try {
     await transferOwnership({
@@ -211,7 +296,7 @@ const handleTransferOwnership = async (userId: string) => {
 }
 
 const handleTransferBillingContact = async (userId: string) => {
-  const organizationId = orgData.value?.organizationBySlug?.id
+  const organizationId = orgData.value?.id
   if (!organizationId) return
   try {
     await transferBillingContact({
@@ -235,7 +320,7 @@ const handleTransferBillingContact = async (userId: string) => {
 // Delete organization handler
 const handleDelete = async () => {
   try {
-    if (!orgData.value?.organizationBySlug) {
+    if (!orgData.value) {
       toast.add({
         title: 'Organization not found',
         description: 'The organization you are trying to delete does not exist.',
@@ -247,7 +332,7 @@ const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this organization? This action cannot be undone.')) {
       return
     }
-    const result = await deleteOrganization({ organizationId: orgData.value.organizationBySlug.id })
+    const result = await deleteOrganization({ organizationId: orgData.value.id })
     if (result.data?.deleteOrganization) {
       toast.add({
         title: 'Organization deleted',
@@ -350,14 +435,14 @@ v-model="currentTab" :items="[
                 {{ membersError.message }}
               </div>
 
-              <div v-else-if="!membersData?.organizationBySlug" class="py-8 text-center text-gray-500">
+              <div v-else-if="!memberOrganization" class="py-8 text-center text-gray-500">
                 Organization not found.
               </div>
 
               <div v-else>
                 <ul class="divide-y divide-gray-100">
                   <li
-                    v-for="member in membersData.organizationBySlug.organizationMemberships.nodes"
+                    v-for="member in members"
                     :key="member.user?.id"
                     class="py-4"
                   >
@@ -373,7 +458,7 @@ v-model="currentTab" :items="[
                         </p>
                       </div>
 
-                      <div v-if="membersData.organizationBySlug.currentUserIsOwner" class="flex gap-2">
+                      <div v-if="memberPermissions?.currentUserIsOwner" class="flex gap-2">
                         <UDropdownMenu
 v-if="member.user?.id" :items="(() => {
                           const userId = member.user?.id
@@ -405,12 +490,12 @@ v-if="member.user?.id" :items="(() => {
                 </ul>
 
                 <div
-                  v-if="membersData.organizationBySlug.organizationMemberships.totalCount > RESULTS_PER_PAGE"
+                  v-if="memberOrganization.organizationMemberships.totalCount > RESULTS_PER_PAGE"
                   class="mt-4"
                 >
                   <UPagination
                     v-model="page"
-                    :total="membersData.organizationBySlug.organizationMemberships.totalCount"
+                    :total="memberOrganization.organizationMemberships.totalCount"
                     :per-page="RESULTS_PER_PAGE"
                   />
                 </div>

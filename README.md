@@ -3,6 +3,9 @@
 For information about Nuxt look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
 Original [Graphile starter](https://github.com/graphile/starter) is build using Next.js and express. This is a fork to use Nuxt, Nuxt UI and URQL.
+
+`main` uses URQL with the GraphQL Codegen client preset, typed documents and fragment masking. The `urql` branch preserves the previous generated-composable integration; `apollo-client` and `apollo-client-preset` provide the Apollo alternatives. See [branch differences and development guidance](docs/branches.md).
+
 ## NOT FOR BEGINNERS
 
 We do not advise that you build your own projects on top of this project until

@@ -1,4 +1,23 @@
 <script setup lang="ts">
+import { useMutation } from '@urql/vue'
+import { graphql } from '~/graphql'
+
+const RequestAccountDeletionDocument = graphql(/* GraphQL */ `
+  mutation RequestAccountDeletion {
+    requestAccountDeletion(input: {}) {
+      success
+    }
+  }
+`)
+
+const ConfirmAccountDeletionDocument = graphql(/* GraphQL */ `
+  mutation ConfirmAccountDeletion($token: String!) {
+    confirmAccountDeletion(input: {token: $token}) {
+      success
+    }
+  }
+`)
+
 definePageMeta({ public: false })
 
 
@@ -17,8 +36,8 @@ const deleted = ref(false)
 function openModal() { confirmOpen.value = true }
 function closeModal() { confirmOpen.value = false }
 
-const requestAccountDeletion = useRequestAccountDeletionMutation()
-const confirmAccountDeletion = useConfirmAccountDeletionMutation()
+const requestAccountDeletion = useMutation(RequestAccountDeletionDocument)
+const confirmAccountDeletion = useMutation(ConfirmAccountDeletionDocument)
 
 async function doIt() {
   error.value = null

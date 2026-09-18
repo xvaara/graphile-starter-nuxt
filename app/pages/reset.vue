@@ -1,4 +1,17 @@
 <script setup lang="ts">
+import { useMutation } from '@urql/vue'
+import { graphql } from '~/graphql'
+
+const ResetPasswordDocument = graphql(/* GraphQL */ `
+  mutation ResetPassword($userId: UUID!, $token: String!, $password: String!) {
+    resetPassword(
+      input: {userId: $userId, resetToken: $token, newPassword: $password}
+    ) {
+      success
+    }
+  }
+`)
+
 definePageMeta({ layout: 'auth', public: true })
 
 const route = useRoute()
@@ -12,7 +25,7 @@ const state = reactive({
   confirm: ''
 })
 
-const { executeMutation: resetPassword, fetching: loading } = useResetPasswordMutation()
+const { executeMutation: resetPassword, fetching: loading } = useMutation(ResetPasswordDocument)
 const success = ref(false)
 
 const passwordsMatch = computed(() => state.password && state.password === state.confirm)

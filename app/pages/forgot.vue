@@ -1,9 +1,20 @@
 <script setup lang="ts">
+import { useMutation } from '@urql/vue'
+import { graphql } from '~/graphql'
+
+const ForgotPasswordDocument = graphql(/* GraphQL */ `
+  mutation ForgotPassword($email: String!) {
+    forgotPassword(input: {email: $email}) {
+      clientMutationId
+    }
+  }
+`)
+
 definePageMeta({ layout: 'auth', public: true })
 
 const toast = useToast()
 const state = reactive({ email: '' })
-const { executeMutation: forgotPassword, fetching: loading } = useForgotPasswordMutation()
+const { executeMutation: forgotPassword, fetching: loading } = useMutation(ForgotPasswordDocument)
 const success = ref(false)
 
 const handleSubmit = async () => {

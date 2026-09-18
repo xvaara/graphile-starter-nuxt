@@ -1,4 +1,20 @@
 <script setup lang="ts">
+import { useMutation } from '@urql/vue'
+import { graphql } from '~/graphql'
+
+const UpdateUserDocument = graphql(/* GraphQL */ `
+  mutation UpdateUser($id: UUID!, $patch: UserPatch!) {
+    updateUser(input: {id: $id, patch: $patch}) {
+      clientMutationId
+      user {
+        id
+        name
+        username
+      }
+    }
+  }
+`)
+
 const { user } = await useAuth()
 
 definePageMeta({
@@ -10,7 +26,7 @@ const form = reactive({
   username: user.value?.username || ''
 })
 
-const { executeMutation: updateProfile, error } = useUpdateUserMutation()
+const { executeMutation: updateProfile, error } = useMutation(UpdateUserDocument)
 
 async function handleSubmit() {
   if (!user.value) return

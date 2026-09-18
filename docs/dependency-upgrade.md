@@ -45,7 +45,7 @@ HTTP, WebSocket, and direct SSR use the same policy helpers. SSR validates the d
 
 ## Reproducing safe checks
 
-Use the copied, ignored `.env` and the existing configured database. Node 26.8.2 and npm 11.19.1 were used. Install with `npm ci` (the root postinstall only prepares Nuxt), then run `npm run graphql` once using the committed schema to create the ignored introspection artifact before starting the app.
+Use the ignored `.env` and the existing configured database. Node 26.8.2 and npm 11.19.1 were used. Install with `npm ci`; after the client-preset migration, root postinstall generates the client documents and Graphcache introspection from the committed schema before preparing Nuxt. See [the branch guide](branches.md) for the preserved `urql` variant and the current `main` integration.
 
 Start only the app on the reserved port:
 

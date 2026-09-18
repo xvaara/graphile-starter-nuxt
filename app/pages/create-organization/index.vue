@@ -1,4 +1,35 @@
 <script setup lang="ts">
+import { useMutation, useQuery } from '@urql/vue'
+import { getFragmentData, graphql } from '~/graphql'
+import { CreatedOrganizationFragment } from '~/operations/fragments'
+
+const CreateOrganizationDocument = graphql(/* GraphQL */ `
+  mutation CreateOrganization($name: String!, $slug: String!) {
+    createOrganization(input: {name: $name, slug: $slug}) {
+      organization {
+        id
+        ...CreatedOrganization
+      }
+      query {
+        organizationBySlug(slug: $slug) {
+          id
+          ...CreatedOrganization
+        }
+      }
+    }
+  }
+`)
+
+const OrganizationBySlugDocument = graphql(/* GraphQL */ `
+  query OrganizationBySlug($slug: String!) {
+    organizationBySlug(slug: $slug) {
+      id
+      name
+      slug
+    }
+  }
+`)
+
 const toast = useToast()
 const router = useRouter()
 
@@ -7,8 +38,8 @@ const state = reactive({
   slug: '',
 })
 
-const { executeMutation: createOrganization, fetching: loading } = useCreateOrganizationMutation()
-const { executeQuery: lookupOrganizationBySlug, data: existingOrganizationData, fetching: slugLoading, error: slugError } = useOrganizationBySlugQuery({variables: computed(() => ({ slug: state.slug })), pause: () => !state.slug })
+const { executeMutation: createOrganization, fetching: loading } = useMutation(CreateOrganizationDocument)
+const { executeQuery: lookupOrganizationBySlug, data: existingOrganizationData, fetching: slugLoading, error: slugError } = useQuery({ query: OrganizationBySlugDocument,variables: computed(() => ({ slug: state.slug })), pause: () => !state.slug })
 const slugCheckIsValid = ref(false)
 const organization = ref<{ id: string; name: string; slug: string } | null>(null)
 const formError = ref<unknown>(null)
@@ -30,7 +61,7 @@ const handleSubmit = async () => {
   try {
     const result = await createOrganization({ name: state.name, slug: state.slug })
     if (result.data?.createOrganization?.organization) {
-      organization.value = result.data.createOrganization.organization
+      organization.value = getFragmentData(CreatedOrganizationFragment, result.data.createOrganization.organization)
       toast.add({
         title: 'Organization created',
         description: `Welcome to ${state.name}!`,

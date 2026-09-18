@@ -29,6 +29,5 @@ logs
 .yarn/*
 
 # Generated files
-utils/graphql.ts
+app/graphql/
 app/utils/introspection.ts
-

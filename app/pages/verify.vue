@@ -1,4 +1,21 @@
 <script setup lang="ts">
+import { useMutation } from '@urql/vue'
+import { graphql } from '~/graphql'
+
+const VerifyEmailDocument = graphql(/* GraphQL */ `
+  mutation VerifyEmail($id: UUID!, $token: String!) {
+    verifyEmail(input: {userEmailId: $id, token: $token}) {
+      success
+      query {
+        currentUser {
+          id
+          isVerified
+        }
+      }
+    }
+  }
+`)
+
 definePageMeta({ layout: 'auth', public: true })
 
 const route = useRoute()
@@ -9,7 +26,7 @@ const state = reactive({
   token: route.query.token as string || ''
 })
 
-const { executeMutation: verifyEmail, fetching: loading } = useVerifyEmailMutation()
+const { executeMutation: verifyEmail, fetching: loading } = useMutation(VerifyEmailDocument)
 const success = ref(false)
 
 const handleSubmit = async () => {

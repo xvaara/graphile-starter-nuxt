@@ -11,6 +11,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const username = `smoke_${randomUUID().replaceAll('-', '').slice(0, 16)}`
 const email = `${username}@example.invalid`
 const password = randomUUID()
+const organizationSlug = `preset-${randomUUID().replaceAll('-', '').slice(0, 12)}`
 const cookieJar = new Map()
 let cookie = ''
 let csrf = ''
@@ -98,6 +99,21 @@ try {
     await page.getByRole('button', { name: 'Sign In', exact: true }).click()
     await page.waitForURL(origin + '/')
     await page.getByRole('button', { name: username, exact: true }).waitFor()
+    await page.goto(`${origin}/settings/emails`, { waitUntil: 'networkidle' })
+    await page.getByRole('heading', { name: 'Email addresses' }).waitFor()
+    await page.locator('li').filter({ hasText: email }).waitFor()
+    await page.goto(`${origin}/create-organization`, { waitUntil: 'networkidle' })
+    await page.getByPlaceholder('Organization name', { exact: true }).fill(organizationSlug)
+    await page.getByRole('button', { name: 'Create', exact: true }).click()
+    await page.waitForURL(`${origin}/o/${organizationSlug}`)
+    await page.getByRole('heading', { name: organizationSlug, exact: true }).waitFor()
+    await page.getByRole('link', { name: 'Organization Settings', exact: true }).click()
+    await page.getByRole('heading', { name: 'Organization Settings', exact: true }).waitFor()
+    assert.equal(await page.getByPlaceholder('Organization name', { exact: true }).inputValue(), organizationSlug)
+    await page.getByRole('tab', { name: 'Members', exact: true }).click()
+    await page.getByRole('heading', { name: 'Existing members', exact: true }).waitFor()
+    await page.locator('li').filter({ hasText: username }).filter({ hasText: 'owner and billing contact' }).waitFor()
+    await page.goto(origin, { waitUntil: 'networkidle' })
     await page.reload({ waitUntil: 'networkidle' })
     await page.getByRole('button', { name: username, exact: true }).click()
     await page.getByRole('menuitem', { name: 'Logout' }).click()
@@ -105,18 +121,21 @@ try {
     assert.deepEqual(errors, [], 'authenticated browser flow has no JavaScript or hydration errors')
   } finally { await browser.close() }
   assert.equal((await graphql('mutation{logout{success}}')).data.logout.success, true)
-  console.log('PASS: anonymous query, register payload/cookie, authenticated query/SSR/cache, logout, login payload, authenticated WebSocket query and subscription notification; browser login/reload/logout')
+  console.log('PASS: auth/SSR isolation, WebSocket query/subscription, browser login/reload/logout, masked email fragments, organization creation and nested member fragments')
 }
 finally {
   // Scope cleanup to this run's unique fixture and its queued jobs, including jobs created by delete triggers.
   const users = await pool.query('select id from app_public.users where username=$1', [username])
   const ids = users.rows.map(row => row.id)
   if (ids.length) {
+    const organizations = await pool.query('select o.id from app_public.organizations o join app_public.organization_memberships m on m.organization_id=o.id where o.slug=$1 and m.user_id=any($2::uuid[])', [organizationSlug, ids])
+    const organizationIds = organizations.rows.map(row => row.id)
+    await pool.query('delete from app_public.organizations where id=any($1::uuid[])', [organizationIds])
     const emails = await pool.query('select id from app_public.user_emails where user_id=any($1::uuid[])', [ids])
     emailIds.push(...emails.rows.map(row => row.id))
     await pool.query('delete from app_public.users where id=any($1::uuid[])', [ids])
-    const identifiers = [...ids, ...emailIds]
-    await pool.query("delete from graphile_worker._private_jobs where payload->>'user_id'=any($1::text[]) or payload->>'id'=any($1::text[]) or payload->>'email'=$2", [identifiers, email])
+    const identifiers = [...ids, ...emailIds, ...organizationIds]
+    await pool.query("delete from graphile_worker._private_jobs where payload->>'user_id'=any($1::text[]) or payload->>'id'=any($1::text[]) or payload->>'organization_id'=any($1::text[]) or payload->>'email'=$2", [identifiers, email])
   }
   await pool.end()
 }
