@@ -6,6 +6,8 @@ Original [Graphile starter](https://github.com/graphile/starter) is build using 
 
 `main` uses URQL with the GraphQL Codegen client preset, typed documents and fragment masking. The `urql` branch preserves the previous generated-composable integration; `apollo-client` and `apollo-client-preset` provide the Apollo alternatives. See [branch differences and development guidance](docs/branches.md).
 
+The [`codex/villus-client-preset`](https://github.com/xvaara/graphile-starter-nuxt/tree/codex/villus-client-preset) branch uses **Villus 3.5.2 with the Codegen client preset** and fragment masking. It preserves direct SSR, cookie authentication, CSRF protection and WebSocket subscriptions, with tagged query caching and explicit mutation invalidation. The GraphQL operations and schema remain unchanged. See [Villus integration and validation notes](docs/villus.md).
+
 ## NOT FOR BEGINNERS
 
 We do not advise that you build your own projects on top of this project until
